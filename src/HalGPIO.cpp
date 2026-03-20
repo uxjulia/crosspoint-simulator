@@ -115,3 +115,4 @@ unsigned long HalGPIO::getHeldTime() const {
 
 HalGPIO::WakeupReason HalGPIO::getWakeupReason() const { return WakeupReason::Other; }
 bool HalGPIO::isUsbConnected() const { return true; }
+bool HalGPIO::wasUsbStateChanged() const { return false; }
