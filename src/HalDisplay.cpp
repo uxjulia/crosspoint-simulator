@@ -54,8 +54,36 @@ void HalDisplay::begin() {
 
 void HalDisplay::clearScreen(uint8_t color) const { memset(getFrameBuffer(), color, BUFFER_SIZE); }
 
-void HalDisplay::drawImage(const uint8_t*, uint16_t, uint16_t, uint16_t, uint16_t, bool) const {}
-void HalDisplay::drawImageTransparent(const uint8_t*, uint16_t, uint16_t, uint16_t, uint16_t, bool) const {}
+void HalDisplay::drawImage(const uint8_t* imageData, uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool) const {
+  uint8_t* fb = getFrameBuffer();
+  const uint16_t imageWidthBytes = w / 8;
+  for (uint16_t row = 0; row < h; row++) {
+    const uint16_t destY = y + row;
+    if (destY >= DISPLAY_HEIGHT) break;
+    const uint16_t destOffset = destY * DISPLAY_WIDTH_BYTES + (x / 8);
+    const uint16_t srcOffset = row * imageWidthBytes;
+    for (uint16_t col = 0; col < imageWidthBytes; col++) {
+      if ((x / 8 + col) >= DISPLAY_WIDTH_BYTES) break;
+      fb[destOffset + col] = imageData[srcOffset + col];
+    }
+  }
+}
+
+void HalDisplay::drawImageTransparent(const uint8_t* imageData, uint16_t x, uint16_t y, uint16_t w, uint16_t h,
+                                      bool) const {
+  uint8_t* fb = getFrameBuffer();
+  const uint16_t imageWidthBytes = w / 8;
+  for (uint16_t row = 0; row < h; row++) {
+    const uint16_t destY = y + row;
+    if (destY >= DISPLAY_HEIGHT) break;
+    const uint16_t destOffset = destY * DISPLAY_WIDTH_BYTES + (x / 8);
+    const uint16_t srcOffset = row * imageWidthBytes;
+    for (uint16_t col = 0; col < imageWidthBytes; col++) {
+      if ((x / 8 + col) >= DISPLAY_WIDTH_BYTES) break;
+      fb[destOffset + col] &= imageData[srcOffset + col];
+    }
+  }
+}
 
 void HalDisplay::displayBuffer(RefreshMode mode, bool turnOffScreen) { refreshDisplay(mode, turnOffScreen); }
 
