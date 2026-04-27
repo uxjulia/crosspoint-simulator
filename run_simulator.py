@@ -10,8 +10,13 @@ Handles two things automatically when this lib is included as a lib_dep:
    Applied idempotently — safe to run on every build.
 
 2. Registers a "run_simulator" custom target so the compiled binary can be
-   launched directly from PlatformIO without copying any scripts to the
-   upstream repo.
+   launched directly from PlatformIO.
+
+Important limitation: when this file is loaded only through library.json as a
+library build hook, PlatformIO CLI can use the target, but the consuming
+project's IDE task list may not show it. To expose "Run Simulator" in the
+PlatformIO IDE UI, the consuming firmware repo still needs a tiny project-level
+post: extra_script pointing at this file inside .pio/libdeps/$PIOENV/simulator.
 """
 
 Import("env")

@@ -29,7 +29,39 @@ Add the simulator to your firmware's platformio.ini as a lib_dep and configure t
 - `sample-platformio-macos.ini`
 - `sample-platformio-linux-wsl.ini`
 
-No scripts need to be copied into the firmware repo - patches and the run target are applied automatically via the library's build script when PlatformIO fetches the simulator as a dependency.
+No scripts need to be copied into the firmware repo for the simulator to build. The simulator library automatically patches consumer-side compatibility issues from its own build script when PlatformIO fetches it as a dependency.
+
+If you only want a self-contained simulator dependency, stop there.
+
+If you also want the `Run Simulator` task to appear in the upstream repo's PlatformIO IDE task list (under the "Custom" folder), add one project-level hook in the consuming firmware repo:
+
+For a normal fetched dependency:
+
+```ini
+extra_scripts =
+  pre:scripts/gen_i18n.py
+  pre:scripts/git_branch.py
+  pre:scripts/build_html.py
+  post:.pio/libdeps/$PIOENV/simulator/run_simulator.py
+```
+
+For a local symlinked dependency:
+
+```ini
+extra_scripts =
+  pre:scripts/gen_i18n.py
+  pre:scripts/git_branch.py
+  pre:scripts/build_html.py
+  post:../crosspoint-simulator/run_simulator.py
+```
+
+Use the symlink form only when your firmware repo and `crosspoint-simulator` repo are checked out side by side and your `lib_deps` entry is:
+
+```ini
+simulator=symlink://../crosspoint-simulator
+```
+
+That one `post:` line only exposes the task in the consuming project UI. The actual logic still lives in this simulator repo.
 
 For local development, replace the git reference with a symlink after you've cloned the repository:
 
@@ -37,11 +69,19 @@ For local development, replace the git reference with a symlink after you've clo
 simulator=symlink://../crosspoint-simulator
 ```
 
+If you also want the PlatformIO IDE `Run Simulator` task while using that symlink, point `post:` at the real sibling-repo script path:
+
+```ini
+post:../crosspoint-simulator/run_simulator.py
+```
+
 ## Setup
 
 Place EPUB books at `./fs_/books/` relative to the project root. This maps to the `/books/` path on the physical SD card.
 
 ## Build and run
+
+The simulator is a desktop GUI app, but it is still launched by a normal command. The CLI command builds the native binary and then starts the SDL window.
 
 ```bash
 pio run -e simulator
@@ -53,6 +93,8 @@ Or use the custom PlatformIO target to build and run in one step:
 ```bash
 pio run -e simulator -t run_simulator
 ```
+
+If the IDE task is wired in via the optional `post:` hook above, clicking `Run Simulator` does the same thing as that command: it launches the GUI window, not a text-mode simulation.
 
 ## Controls
 
