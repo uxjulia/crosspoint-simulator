@@ -68,7 +68,8 @@ void HalFile::flush() {
     fsync(impl->fd);
 }
 bool HalFile::sync() {
-  if (!impl || impl->fd < 0) return false;
+  if (!impl || impl->fd < 0)
+    return false;
   return fsync(impl->fd) == 0;
 }
 size_t HalFile::getName(char *name, size_t len) {

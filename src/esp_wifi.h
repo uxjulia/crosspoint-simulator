@@ -1,6 +1,6 @@
 #pragma once
 
-#include "esp_http_client.h"  // for esp_err_t / ESP_OK
+#include "esp_http_client.h" // for esp_err_t / ESP_OK
 
 enum wifi_ps_type_t {
   WIFI_PS_NONE = 0,

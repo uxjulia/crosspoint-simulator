@@ -6,16 +6,19 @@
 #include "WString.h"
 
 namespace ArduinoJson {
-template <>
-struct Converter<String> {
-  static void toJson(const String& src, JsonVariant dst) { dst.set(src.c_str()); }
+template <> struct Converter<String> {
+  static void toJson(const String &src, JsonVariant dst) {
+    dst.set(src.c_str());
+  }
   static String fromJson(JsonVariantConst src) {
-    if (src.is<const char*>()) {
-      return String(src.as<const char*>());
+    if (src.is<const char *>()) {
+      return String(src.as<const char *>());
     }
     return String();
   }
-  static bool checkJson(JsonVariantConst src) { return src.is<const char*>() || src.is<std::string>(); }
+  static bool checkJson(JsonVariantConst src) {
+    return src.is<const char *>() || src.is<std::string>();
+  }
 };
-}  // namespace ArduinoJson
+} // namespace ArduinoJson
 #endif

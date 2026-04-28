@@ -189,7 +189,7 @@ void HalDisplay::copyGrayscaleBuffers(const uint8_t *, const uint8_t *) {}
 void HalDisplay::copyGrayscaleLsbBuffers(const uint8_t *) {}
 void HalDisplay::copyGrayscaleMsbBuffers(const uint8_t *) {}
 void HalDisplay::cleanupGrayscaleBuffers(const uint8_t *) {}
-void HalDisplay::displayGrayBuffer(bool, const unsigned char*, bool) {}
+void HalDisplay::displayGrayBuffer(bool, const unsigned char *, bool) {}
 
 uint16_t HalDisplay::getDisplayWidth() const { return DISPLAY_WIDTH; }
 uint16_t HalDisplay::getDisplayHeight() const { return DISPLAY_HEIGHT; }

@@ -4,20 +4,20 @@
 #include "WString.h"
 
 class StreamString : public Stream {
- private:
+private:
   String buffer;
   size_t position;
 
- public:
+public:
   StreamString() : position(0) {}
-  explicit StreamString(const String& str) : buffer(str), position(0) {}
+  explicit StreamString(const String &str) : buffer(str), position(0) {}
 
   virtual size_t write(uint8_t c) override {
     buffer += (char)c;
     return 1;
   }
 
-  virtual size_t write(const uint8_t* buf, size_t size) override {
+  virtual size_t write(const uint8_t *buf, size_t size) override {
     for (size_t i = 0; i < size; ++i) {
       buffer += (char)buf[i];
     }
@@ -44,9 +44,9 @@ class StreamString : public Stream {
     // No-op for string stream
   }
 
-  const String& str() const { return buffer; }
+  const String &str() const { return buffer; }
 
-  const char* c_str() const { return buffer.c_str(); }
+  const char *c_str() const { return buffer.c_str(); }
 
   void clear() {
     buffer = "";

@@ -3,7 +3,7 @@
 #include <EInkDisplay.h>
 
 class HalDisplay {
- public:
+public:
   // Constructor with pin configuration
   HalDisplay();
 
@@ -12,9 +12,9 @@ class HalDisplay {
 
   // Refresh modes
   enum RefreshMode {
-    FULL_REFRESH,  // Full refresh with complete waveform
-    HALF_REFRESH,  // Half refresh (1720ms) - balanced quality and speed
-    FAST_REFRESH   // Fast refresh using custom LUT
+    FULL_REFRESH, // Full refresh with complete waveform
+    HALF_REFRESH, // Half refresh (1720ms) - balanced quality and speed
+    FAST_REFRESH  // Fast refresh using custom LUT
   };
 
   // Initialize the display hardware and driver
@@ -28,19 +28,22 @@ class HalDisplay {
 
   // Frame buffer operations
   void clearScreen(uint8_t color = 0xFF) const;
-  void drawImage(const uint8_t* imageData, uint16_t x, uint16_t y, uint16_t w, uint16_t h,
-                 bool fromProgmem = false) const;
-  void drawImageTransparent(const uint8_t* imageData, uint16_t x, uint16_t y, uint16_t w, uint16_t h,
+  void drawImage(const uint8_t *imageData, uint16_t x, uint16_t y, uint16_t w,
+                 uint16_t h, bool fromProgmem = false) const;
+  void drawImageTransparent(const uint8_t *imageData, uint16_t x, uint16_t y,
+                            uint16_t w, uint16_t h,
                             bool fromProgmem = false) const;
 
-  void displayBuffer(RefreshMode mode = RefreshMode::FAST_REFRESH, bool turnOffScreen = false);
-  void refreshDisplay(RefreshMode mode = RefreshMode::FAST_REFRESH, bool turnOffScreen = false);
+  void displayBuffer(RefreshMode mode = RefreshMode::FAST_REFRESH,
+                     bool turnOffScreen = false);
+  void refreshDisplay(RefreshMode mode = RefreshMode::FAST_REFRESH,
+                      bool turnOffScreen = false);
 
   // Power management
   void deepSleep();
 
   // Access to frame buffer
-  uint8_t* getFrameBuffer() const;
+  uint8_t *getFrameBuffer() const;
 
   // Runtime geometry passthrough
   uint16_t getDisplayWidth() const;
@@ -48,21 +51,24 @@ class HalDisplay {
   uint16_t getDisplayWidthBytes() const;
   uint32_t getBufferSize() const;
 
-  void copyGrayscaleBuffers(const uint8_t* lsbBuffer, const uint8_t* msbBuffer);
-  void copyGrayscaleLsbBuffers(const uint8_t* lsbBuffer);
-  void copyGrayscaleMsbBuffers(const uint8_t* msbBuffer);
-  void cleanupGrayscaleBuffers(const uint8_t* bwBuffer);
+  void copyGrayscaleBuffers(const uint8_t *lsbBuffer, const uint8_t *msbBuffer);
+  void copyGrayscaleLsbBuffers(const uint8_t *lsbBuffer);
+  void copyGrayscaleMsbBuffers(const uint8_t *msbBuffer);
+  void cleanupGrayscaleBuffers(const uint8_t *bwBuffer);
 
-  void displayGrayBuffer(bool turnOffScreen = false, const unsigned char* lut = nullptr, bool factoryMode = false);
+  void displayGrayBuffer(bool turnOffScreen = false,
+                         const unsigned char *lut = nullptr,
+                         bool factoryMode = false);
 
-  // Simulator only: keep SDL window rotation in sync with GfxRenderer orientation.
+  // Simulator only: keep SDL window rotation in sync with GfxRenderer
+  // orientation.
   void setSimulatorOrientation(int orientation);
   // Simulator only: call from main thread to push rendered pixels to SDL.
   void presentIfNeeded();
   // Simulator only: returns true once the window close button has been clicked.
   bool shouldQuit() const;
 
- private:
+private:
   EInkDisplay einkDisplay;
 };
 

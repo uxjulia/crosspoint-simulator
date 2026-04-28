@@ -7,17 +7,21 @@
 
 #include "WString.h"
 
-// Simulator implementation of Arduino ESP32's MD5Builder using macOS CommonCrypto.
+// Simulator implementation of Arduino ESP32's MD5Builder using macOS
+// CommonCrypto.
 class MD5Builder {
- public:
+public:
   MD5Builder() { memset(digest_, 0, sizeof(digest_)); }
 
   void begin() { CC_MD5_Init(&ctx_); }
 
-  void add(const uint8_t* data, size_t len) { CC_MD5_Update(&ctx_, data, static_cast<CC_LONG>(len)); }
+  void add(const uint8_t *data, size_t len) {
+    CC_MD5_Update(&ctx_, data, static_cast<CC_LONG>(len));
+  }
 
-  void add(const char* str) {
-    if (str) add(reinterpret_cast<const uint8_t*>(str), strlen(str));
+  void add(const char *str) {
+    if (str)
+      add(reinterpret_cast<const uint8_t *>(str), strlen(str));
   }
 
   void calculate() { CC_MD5_Final(digest_, &ctx_); }
@@ -30,7 +34,7 @@ class MD5Builder {
     return String(hex);
   }
 
- private:
+private:
   CC_MD5_CTX ctx_{};
   uint8_t digest_[16];
 };

@@ -17,15 +17,14 @@ enum WStype_t {
 };
 
 class WebSocketsServer {
- public:
+public:
   WebSocketsServer(int port) {}
   void begin() {}
   void loop() {}
-  template <typename T>
-  void onEvent(T) {}
-  void broadcastTXT(const String& txt) {}
-  void broadcastTXT(const char* txt) {}
-  void sendTXT(uint8_t num, const String& txt) {}
-  void sendTXT(uint8_t num, const char* txt) {}
+  template <typename T> void onEvent(T) {}
+  void broadcastTXT(const String &txt) {}
+  void broadcastTXT(const char *txt) {}
+  void sendTXT(uint8_t num, const String &txt) {}
+  void sendTXT(uint8_t num, const char *txt) {}
   void close() {}
 };

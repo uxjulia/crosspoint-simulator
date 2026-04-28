@@ -90,6 +90,8 @@ pio run -e simulator -t run_simulator
 | Escape | Back                               |
 | P      | Power                              |
 
+When the simulator is on the sleep screen, pressing any mapped simulator key wakes it. Under the hood the simulator relaunches itself and reports a synthetic power-button wake, because the native build has no real ESP deep-sleep resume path.
+
 ## Notes
 
 **Cache**: On first open of an ebook, an "Indexing..." popup will appear while the section cache is built. If you see rendering issues after a code change that affects layout, delete `./fs_/.crosspoint/` to clear stale caches.

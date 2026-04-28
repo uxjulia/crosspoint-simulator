@@ -8,14 +8,16 @@
 class Stream;
 
 class NetworkClient {
- public:
+public:
   NetworkClient() {}
   virtual ~NetworkClient() {}
-  virtual int connect(const char* host, uint16_t port) { return 1; }
-  virtual size_t write(const uint8_t* buf, size_t size) { return size; }
-  virtual size_t write(const char* str) { return write((const uint8_t*)str, strlen(str)); }
+  virtual int connect(const char *host, uint16_t port) { return 1; }
+  virtual size_t write(const uint8_t *buf, size_t size) { return size; }
+  virtual size_t write(const char *str) {
+    return write((const uint8_t *)str, strlen(str));
+  }
   virtual size_t write(uint8_t c) { return write(&c, 1); }
-  virtual size_t write(Stream& stream) { return 0; }  // Dummy implementation
+  virtual size_t write(Stream &stream) { return 0; } // Dummy implementation
   virtual int available() { return 0; }
   virtual int read() { return -1; }
   virtual void stop() {}
@@ -25,6 +27,6 @@ class NetworkClient {
 };
 
 class NetworkClientSecure : public NetworkClient {
- public:
+public:
   void setInsecure() {}
 };

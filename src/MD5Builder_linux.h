@@ -15,7 +15,7 @@
 #endif
 
 class MD5Builder {
- public:
+public:
   MD5Builder() { memset(digest_, 0, sizeof(digest_)); }
 
   void begin() {
@@ -26,7 +26,7 @@ class MD5Builder {
 #endif
   }
 
-  void add(const uint8_t* data, size_t len) {
+  void add(const uint8_t *data, size_t len) {
 #if defined(__APPLE__)
     CC_MD5_Update(&ctx_, data, static_cast<CC_LONG>(len));
 #else
@@ -34,8 +34,9 @@ class MD5Builder {
 #endif
   }
 
-  void add(const char* str) {
-    if (str) add(reinterpret_cast<const uint8_t*>(str), strlen(str));
+  void add(const char *str) {
+    if (str)
+      add(reinterpret_cast<const uint8_t *>(str), strlen(str));
   }
 
   void calculate() {
@@ -54,7 +55,7 @@ class MD5Builder {
     return String(hex);
   }
 
- private:
+private:
 #if defined(__APPLE__)
   CC_MD5_CTX ctx_{};
 #else

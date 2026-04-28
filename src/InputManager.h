@@ -1,6 +1,6 @@
 #pragma once
 class InputManager {
- public:
+public:
   InputManager() {}
   void begin() {}
   void update() {}

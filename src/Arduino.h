@@ -12,7 +12,7 @@
 #define IRAM_ATTR
 #define DRAM_ATTR
 #define RTC_NOINIT_ATTR
-#define PGM_P const char*
+#define PGM_P const char *
 #define PSTR(s) (s)
 
 inline unsigned long millis() {
@@ -27,7 +27,9 @@ inline unsigned long micros() {
   return duration_cast<microseconds>(steady_clock::now() - start).count();
 }
 
-inline void delay(unsigned long ms) { std::this_thread::sleep_for(std::chrono::milliseconds(ms)); }
+inline void delay(unsigned long ms) {
+  std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+}
 inline void yield() { std::this_thread::yield(); }
 
 #include "HardwareSerial.h"

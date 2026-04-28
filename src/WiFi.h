@@ -15,7 +15,7 @@ typedef int wifi_mode_t;
 class IPAddress {
   uint8_t bytes[4] = {127, 0, 0, 1};
 
- public:
+public:
   IPAddress() {}
   IPAddress(uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
     bytes[0] = a;
@@ -25,30 +25,34 @@ class IPAddress {
   }
   String toString() const { return String("127.0.0.1"); }
   uint8_t operator[](int i) const { return bytes[i % 4]; }
-  uint8_t& operator[](int i) { return bytes[i % 4]; }
-  bool operator==(const IPAddress& o) const { return true; }
-  bool operator!=(const IPAddress& o) const { return false; }
+  uint8_t &operator[](int i) { return bytes[i % 4]; }
+  bool operator==(const IPAddress &o) const { return true; }
+  bool operator!=(const IPAddress &o) const { return false; }
 };
 
 class WiFiClass {
- public:
-  int begin(const char* ssid = nullptr, const char* pass = nullptr) { return 3; }
-  int status() { return 3; }  // WL_CONNECTED
+public:
+  int begin(const char *ssid = nullptr, const char *pass = nullptr) {
+    return 3;
+  }
+  int status() { return 3; } // WL_CONNECTED
   IPAddress localIP() { return IPAddress(); }
   void persistent(bool) {}
   void disconnect(bool wifioff = false, bool eraseap = false) {}
   void mode(int) {}
-  bool softAP(const char* ssid, const char* pass = NULL, int channel = 1, int hidden = 0, int max_connection = 4) {
+  bool softAP(const char *ssid, const char *pass = NULL, int channel = 1,
+              int hidden = 0, int max_connection = 4) {
     return true;
   }
   bool softAPdisconnect(bool wifioff = false) { return true; }
   IPAddress softAPIP() { return IPAddress(); }
 
   String macAddress() { return String("00:00:00:00:00:00"); }
-  uint8_t* macAddress(uint8_t* mac) { return mac; }
+  uint8_t *macAddress(uint8_t *mac) { return mac; }
 
   void scanDelete() {}
-  int scanNetworks(bool async = false, bool show_hidden = false, bool passive = false, uint32_t max_ms_per_chan = 300,
+  int scanNetworks(bool async = false, bool show_hidden = false,
+                   bool passive = false, uint32_t max_ms_per_chan = 300,
                    uint8_t channel = 0) {
     return 0;
   }
@@ -58,7 +62,7 @@ class WiFiClass {
   int RSSI() { return -50; }
   int RSSI(int i) { return -50; }
   int encryptionType(int i) { return 0; }
-  void setHostname(const char*) {}
+  void setHostname(const char *) {}
   wifi_mode_t getMode() { return WIFI_MODE_STA; }
   void setSleep(bool) {}
   String getHostname() { return String("mock-hostname"); }

@@ -15,9 +15,9 @@ enum DNSReplyCode {
 };
 
 class DNSServer {
- public:
-  void start(int port, const char* name, const IPAddress& ip) {}
-  void start(int port, const char* name, const char* ip) {}
+public:
+  void start(int port, const char *name, const IPAddress &ip) {}
+  void start(int port, const char *name, const char *ip) {}
   void processNextRequest() {}
   void stop() {}
   void setErrorReplyCode(DNSReplyCode code) {}

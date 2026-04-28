@@ -1,6 +1,6 @@
 #pragma once
 class SPIClass {
- public:
+public:
   void begin(int sck = -1, int miso = -1, int mosi = -1, int ss = -1) {}
   void end() {}
 };
