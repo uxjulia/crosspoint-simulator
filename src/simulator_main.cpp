@@ -4,23 +4,26 @@
 
 #include "Arduino.h"
 #include "HalDisplay.h"
+#include "SimulatorLifecycle.h"
 
 extern void setup();
 extern void loop();
-extern HalDisplay display;  // defined in main.cpp
+extern HalDisplay display; // defined in main.cpp
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
+  SimulatorLifecycle::initProcessArgs(argv);
   setup();
   while (!display.shouldQuit()) {
     loop();
     // SDL must be driven from the main thread on macOS.
-    // The render task writes pixels and sets pendingPresent; we flush them here.
+    // The render task writes pixels and sets pendingPresent; we flush them
+    // here.
     display.presentIfNeeded();
     // Yield to the OS so macOS delivers pending keyboard/window events to SDL.
     // Without this, the tight spin-loop starves the Cocoa event system and key
-    // presses are only picked up sporadically. 1 ms also caps the loop at ~1 kHz,
-    // which matches realistic device behaviour (the real ESP32-C3 is limited by
-    // FreeRTOS tick rate and e-ink refresh time).
+    // presses are only picked up sporadically. 1 ms also caps the loop at ~1
+    // kHz, which matches realistic device behaviour (the real ESP32-C3 is
+    // limited by FreeRTOS tick rate and e-ink refresh time).
     SDL_Delay(1);
   }
   SDL_Quit();
