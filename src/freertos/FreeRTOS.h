@@ -23,5 +23,6 @@ struct SimTaskHandle {
   std::condition_variable cv;
   uint32_t notifyCount = 0;
   std::thread::id id;
+  const char *name = "sim-task";
 };
 typedef SimTaskHandle *TaskHandle_t;

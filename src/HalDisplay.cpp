@@ -111,6 +111,10 @@ void HalDisplay::displayBuffer(RefreshMode mode, bool turnOffScreen) {
   refreshDisplay(mode, turnOffScreen);
 }
 
+void HalDisplay::displayWindow(int, int, int, int) {
+  refreshDisplay(RefreshMode::FAST_REFRESH, false);
+}
+
 // Called from the render task (background thread): convert framebuffer to
 // pixels and flag for present.
 void HalDisplay::refreshDisplay(RefreshMode /*mode*/, bool /*turnOffScreen*/) {

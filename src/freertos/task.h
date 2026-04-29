@@ -8,10 +8,11 @@ inline thread_local SimTaskHandle *tl_currentTaskHandle = nullptr;
 
 // Create a real OS thread. The FreeRTOS task function signature is
 // void(*)(void*).
-inline int xTaskCreate(void (*fn)(void *), const char * /*name*/,
+inline int xTaskCreate(void (*fn)(void *), const char *name,
                        uint32_t /*stackDepth*/, void *param, int /*priority*/,
                        TaskHandle_t *handle) {
   auto *h = new SimTaskHandle();
+  h->name = name ? name : "sim-task";
   h->thread = std::thread([fn, param, h]() {
     tl_currentTaskHandle = h;
     h->id = std::this_thread::get_id();
@@ -48,6 +49,11 @@ inline void xTaskNotify(TaskHandle_t handle, uint32_t /*value*/,
 }
 
 inline TaskHandle_t xTaskGetCurrentTaskHandle() { return tl_currentTaskHandle; }
+inline const char *pcTaskGetName(TaskHandle_t h) {
+  if (!h)
+    h = tl_currentTaskHandle;
+  return h ? h->name : "main";
+}
 inline void vTaskDelete(TaskHandle_t h) {
   if (h) {
     if (h->thread.joinable())
