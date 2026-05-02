@@ -3,12 +3,9 @@
 #include <cstddef>
 #include <cstdint>
 
-typedef void *esp_http_client_handle_t;
-typedef int esp_err_t;
+#include "esp_err.h"
 
-#define ESP_OK 0
-#define ESP_ERR_NO_MEM -1
-#define ESP_FAIL -2
+typedef void *esp_http_client_handle_t;
 
 enum http_event { HTTP_EVENT_ON_DATA };
 
