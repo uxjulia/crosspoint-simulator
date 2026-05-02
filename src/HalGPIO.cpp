@@ -54,6 +54,8 @@ static int scancodeToButton(SDL_Scancode sc) {
 void HalGPIO::begin() {
 #ifdef FORCE_DEVICE_X3
   _deviceType = DeviceType::X3;
+#else
+  _deviceType = DeviceType::X4;
 #endif
 }
 
@@ -136,7 +138,8 @@ unsigned long HalGPIO::getHeldTime() const {
 }
 
 HalGPIO::WakeupReason HalGPIO::getWakeupReason() const {
-  if (SimulatorLifecycle::consumeWakeReason() == SimulatorLifecycle::WakeReason::PowerButton) {
+  if (SimulatorLifecycle::consumeWakeReason() ==
+      SimulatorLifecycle::WakeReason::PowerButton) {
     return WakeupReason::PowerButton;
   }
   return WakeupReason::Other;
@@ -154,7 +157,8 @@ void HalGPIO::startDeepSleep() {
         return;
       }
 
-      if (e.type == SDL_KEYDOWN && !e.key.repeat && scancodeToButton(e.key.keysym.scancode) >= 0) {
+      if (e.type == SDL_KEYDOWN && !e.key.repeat &&
+          scancodeToButton(e.key.keysym.scancode) >= 0) {
         clearButtonState();
         SimulatorLifecycle::rebootAsPowerWake();
       }
