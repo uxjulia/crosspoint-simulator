@@ -51,7 +51,11 @@ static int scancodeToButton(SDL_Scancode sc) {
   return -1;
 }
 
-void HalGPIO::begin() {}
+void HalGPIO::begin() {
+#ifdef FORCE_DEVICE_X3
+  _deviceType = DeviceType::X3;
+#endif
+}
 
 void HalGPIO::update() {
   // Reset per-frame state
