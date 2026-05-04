@@ -21,14 +21,11 @@ when both paths load the script.
 
 Import("env")
 import os
-import builtins
-
-RUN_SIMULATOR_TARGET_KEY = "_crosspoint_run_simulator_target_registered"
 
 
 # --- BookMetadataCache patch ---
 
-def _patch_book_metadata_cache(env):
+def _patch_book_metadata_cache(source, target, env):
     header = os.path.join(
         env["PROJECT_DIR"], "lib", "Epub", "Epub", "BookMetadataCache.h"
     )
@@ -100,26 +97,15 @@ def _apply_source_patch(filepath):
         f.write(content)
     print("Patched BookMetadataCache source: size_t -> uint32_t for simulator: %s" % filepath)
 
-
-_patch_book_metadata_cache(env)
+env.AddPreAction("$BUILD_DIR/program", _patch_book_metadata_cache)
 
 
 # --- run_simulator custom target ---
-
-def _run_simulator(source, target, env):
-    import subprocess
-
-    binary = env.subst("$BUILD_DIR/program")
-    subprocess.run([binary], cwd=os.getcwd())
-
-
-if not getattr(builtins, RUN_SIMULATOR_TARGET_KEY, False):
-    setattr(builtins, RUN_SIMULATOR_TARGET_KEY, True)
-    env.AddCustomTarget(
-        name="run_simulator",
-        dependencies=None,
-        actions=_run_simulator,
-        title="Run Simulator",
-        description="Build and run the desktop simulator",
-        always_build=True,
-    )
+env.AddCustomTarget(
+    name="run_simulator",
+    dependencies="$BUILD_DIR/program",
+    actions="$BUILD_DIR/program",
+    title="Run Simulator",
+    description="Build and run the desktop simulator",
+    always_build=True,
+)

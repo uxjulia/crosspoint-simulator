@@ -1,7 +1,5 @@
 {
   "name": "Crosspoint Simulator",
   "version": "1.0.0",
-  "build": {
-    "extraScript": "run_simulator.py"
-  }
+  "build": {}
 }
