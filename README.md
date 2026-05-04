@@ -33,11 +33,9 @@ Add the simulator to your firmware's platformio.ini as a `lib_dep` and configure
 - `sample-platformio-macos.ini`
 - `sample-platformio-linux-wsl.ini`
 
-No scripts need to be copied into the firmware repo for the simulator to build. The simulator library automatically patches consumer-side compatibility issues from its own build script when PlatformIO fetches it as a dependency.
+No scripts need to be copied into the firmware repo for the simulator to build. However, the consuming firmware project must add a project-level `extra_scripts` hook so the simulator's build-time patching and `Run Simulator` custom target registration execute correctly.
 
-If you only want a self-contained simulator dependency, stop there.
-
-If you also want the `Run Simulator` task to appear in the upstream repo's PlatformIO IDE task list (under the "Custom" folder), add one project-level hook in the consuming firmware repo:
+Add the following project-level hook in the consuming firmware repo to enable both the patching and the IDE task registration:
 
 For a normal fetched dependency:
 
