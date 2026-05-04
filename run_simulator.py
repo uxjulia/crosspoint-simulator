@@ -103,7 +103,7 @@ env.AddPreAction("$BUILD_DIR/program", _patch_book_metadata_cache)
 # --- run_simulator custom target ---
 env.AddCustomTarget(
     name="run_simulator",
-    dependencies=None,
+    dependencies="$BUILD_DIR/program",
     actions="$BUILD_DIR/program",
     title="Run Simulator",
     description="Build and run the desktop simulator",
