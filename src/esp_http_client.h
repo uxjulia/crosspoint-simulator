@@ -9,21 +9,29 @@ typedef void *esp_http_client_handle_t;
 
 enum http_event { HTTP_EVENT_ON_DATA };
 
+enum esp_http_client_method_t {
+  HTTP_METHOD_GET,
+  HTTP_METHOD_PUT,
+};
+
 struct esp_http_client_event_t {
   http_event event_id;
   esp_http_client_handle_t client;
-  void *data;
-  int data_len;
+  void *data = nullptr;
+  int data_len = 0;
+  void *user_data = nullptr;
 };
 
 typedef esp_err_t (*http_event_handler_cb)(esp_http_client_event_t *evt);
 
 struct esp_http_client_config_t {
   const char *url = nullptr;
+  esp_http_client_method_t method = HTTP_METHOD_GET;
   http_event_handler_cb event_handler = nullptr;
   int timeout_ms = 0;
   int buffer_size = 0;
   int buffer_size_tx = 0;
+  void *user_data = nullptr;
   bool skip_cert_common_name_check = false;
   esp_err_t (*crt_bundle_attach)(void *conf) = nullptr;
   bool keep_alive_enable = false;
@@ -33,8 +41,14 @@ inline esp_err_t esp_http_client_set_header(esp_http_client_handle_t,
                                             const char *, const char *) {
   return ESP_OK;
 }
+inline esp_err_t esp_http_client_set_post_field(esp_http_client_handle_t client, const char *data, int len) {
+  return ESP_FAIL;
+}
 inline bool esp_http_client_is_chunked_response(esp_http_client_handle_t) {
   return false;
+}
+inline int esp_http_client_get_status_code(esp_http_client_handle_t client) {
+  return 0;
 }
 inline int esp_http_client_get_content_length(esp_http_client_handle_t) {
   return 0;
