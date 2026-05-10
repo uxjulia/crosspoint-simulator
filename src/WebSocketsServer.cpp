@@ -335,7 +335,7 @@ void WebSocketsServer::begin() {
 
   impl_->fd = ::socket(AF_INET, SOCK_STREAM, 0);
   if (impl_->fd < 0) {
-    LOG_ERR("WS", "[EMU] WebSocket socket failed: %s", strerror(errno));
+    LOG_ERR("WS", "[SIM] WebSocket socket failed: %s", strerror(errno));
     return;
   }
 
@@ -348,14 +348,14 @@ void WebSocketsServer::begin() {
   addr.sin_port = htons(impl_->port);
   if (::bind(impl_->fd, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) !=
       0) {
-    LOG_ERR("WS", "[EMU] WebSocket bind 127.0.0.1:%d failed: %s", impl_->port,
+    LOG_ERR("WS", "[SIM] WebSocket bind 127.0.0.1:%d failed: %s", impl_->port,
             strerror(errno));
     ::close(impl_->fd);
     impl_->fd = -1;
     return;
   }
   if (::listen(impl_->fd, 8) != 0) {
-    LOG_ERR("WS", "[EMU] WebSocket listen failed: %s", strerror(errno));
+    LOG_ERR("WS", "[SIM] WebSocket listen failed: %s", strerror(errno));
     ::close(impl_->fd);
     impl_->fd = -1;
     return;
@@ -367,7 +367,7 @@ void WebSocketsServer::begin() {
       const int client = ::accept(impl_->fd, nullptr, nullptr);
       if (client < 0) {
         if (impl_->active)
-          LOG_ERR("WS", "[EMU] WebSocket accept failed: %s", strerror(errno));
+          LOG_ERR("WS", "[SIM] WebSocket accept failed: %s", strerror(errno));
         continue;
       }
       setSocketTimeouts(client);
@@ -449,7 +449,7 @@ void WebSocketsServer::begin() {
     }
   });
 
-  LOG_DBG("WS", "[EMU] WebSocket server running at ws://127.0.0.1:%d/",
+  LOG_DBG("WS", "[SIM] WebSocket server running at ws://127.0.0.1:%d/",
           impl_->port);
 }
 

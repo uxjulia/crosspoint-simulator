@@ -397,6 +397,7 @@ struct WebServer::Impl {
       out << "Content-Length: "
           << (responseContentLengthSet ? responseContentLength : bodyLen)
           << "\r\n";
+      out << "Connection: close\r\n";
     }
     out << "Content-Type: " << (contentType ? contentType : "text/plain")
         << "\r\n"
@@ -420,7 +421,7 @@ void WebServer::begin() {
 
   impl_->fd = ::socket(AF_INET, SOCK_STREAM, 0);
   if (impl_->fd < 0) {
-    LOG_ERR("WEB", "[EMU] WebServer socket failed: %s", strerror(errno));
+    LOG_ERR("WEB", "[SIM] WebServer socket failed: %s", strerror(errno));
     return;
   }
 
@@ -433,14 +434,14 @@ void WebServer::begin() {
   addr.sin_port = htons(impl_->port);
   if (::bind(impl_->fd, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) !=
       0) {
-    LOG_ERR("WEB", "[EMU] WebServer bind 127.0.0.1:%d failed: %s", impl_->port,
+    LOG_ERR("WEB", "[SIM] WebServer bind 127.0.0.1:%d failed: %s", impl_->port,
             strerror(errno));
     ::close(impl_->fd);
     impl_->fd = -1;
     return;
   }
   if (::listen(impl_->fd, 16) != 0) {
-    LOG_ERR("WEB", "[EMU] WebServer listen failed: %s", strerror(errno));
+    LOG_ERR("WEB", "[SIM] WebServer listen failed: %s", strerror(errno));
     ::close(impl_->fd);
     impl_->fd = -1;
     return;
@@ -452,7 +453,7 @@ void WebServer::begin() {
       const int client = ::accept(impl_->fd, nullptr, nullptr);
       if (client < 0) {
         if (impl_->active)
-          LOG_ERR("WEB", "[EMU] WebServer accept failed: %s", strerror(errno));
+          LOG_ERR("WEB", "[SIM] WebServer accept failed: %s", strerror(errno));
         continue;
       }
       setSocketTimeouts(client);
@@ -520,7 +521,7 @@ void WebServer::begin() {
       const auto rawHandlers = impl_->rawHandlers(*this);
       const bool hasRawHandlers = !rawHandlers.empty();
       if (bodyLength > MAX_BODY_SIZE) {
-        LOG_ERR("WEB", "[EMU] Request body too large: %zu bytes", bodyLength);
+        LOG_ERR("WEB", "[SIM] Request body too large: %zu bytes", bodyLength);
         if (hasRawHandlers) {
           impl_->emitRawEvent(*this, rawHandlers, RAW_START, nullptr, 0);
           impl_->emitRawEvent(*this, rawHandlers, RAW_ABORTED, nullptr, 0);
@@ -562,7 +563,7 @@ void WebServer::begin() {
         }
       }
       if (body.size() < bodyLength) {
-        LOG_ERR("WEB", "[EMU] Incomplete request body: %zu/%zu bytes",
+        LOG_ERR("WEB", "[SIM] Incomplete request body: %zu/%zu bytes",
                 body.size(), bodyLength);
         if (hasRawHandlers)
           impl_->emitRawEvent(*this, rawHandlers, RAW_ABORTED, nullptr, 0);
@@ -589,13 +590,15 @@ void WebServer::begin() {
         impl_->currentArgs.emplace_back(String("plain"), String(body));
       }
 
-      LOG_DBG("WEB", "[EMU] %s %s", methodText.c_str(), target.c_str());
+      LOG_DBG("WEB", "[SIM] %s %s", methodText.c_str(), target.c_str());
 
       bool handled = false;
       for (const auto &route : impl_->routes) {
+        const bool headMatchesGet =
+            impl_->currentMethod == HTTP_HEAD && route.method == HTTP_GET;
         if (route.uri == impl_->currentUri &&
-            (route.method == impl_->currentMethod ||
-             route.method == HTTP_ANY)) {
+            (route.method == impl_->currentMethod || route.method == HTTP_ANY ||
+             headMatchesGet)) {
           if (route.uploadHandler &&
               contentType.find("multipart/form-data") != std::string::npos) {
             const auto parts = parseMultipart(contentType, body);
@@ -660,7 +663,7 @@ void WebServer::begin() {
       impl_->resetRequest();
     }
   });
-  LOG_DBG("WEB", "[EMU] WebServer running at http://127.0.0.1:%d/",
+  LOG_DBG("WEB", "[SIM] WebServer running at http://127.0.0.1:%d/",
           impl_->port);
 }
 
@@ -791,7 +794,7 @@ NetworkClient WebServer::client() {
     return NetworkClient(-1);
   const int fd = ::dup(impl_->currentClient);
   if (fd < 0)
-    LOG_ERR("WEB", "[EMU] Failed to duplicate client socket: %s",
+    LOG_ERR("WEB", "[SIM] Failed to duplicate client socket: %s",
             strerror(errno));
   return NetworkClient(fd);
 }

@@ -51,6 +51,8 @@ public:
         s.substr(from, to == (unsigned int)-1 ? std::string::npos : to - from));
   }
   int lastIndexOf(char c) const { return s.rfind(c); }
+  int indexOf(char c) const { return s.find(c); }
+  int indexOf(char c, size_t pos) const { return s.find(c, pos); }
   int indexOf(const char *substr) const { return s.find(substr); }
   int indexOf(const char *substr, size_t pos) const {
     return s.find(substr, pos);

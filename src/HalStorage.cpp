@@ -7,13 +7,86 @@
 
 #include <cerrno>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <limits>
+#include <sstream>
 #include <vector>
 
 HalStorage HalStorage::instance;
 HalStorage::HalStorage() {}
-bool HalStorage::begin() { return true; }
+
+namespace {
+std::string configuredStorageRoot() {
+  const char *root = std::getenv("CROSSPOINT_SIM_SD");
+  if (!root || !*root) {
+    root = std::getenv("CROSSPOINT_EMU_SD");
+  }
+  return (root && *root) ? std::string(root) : std::string("./fs_");
+}
+
+bool containsUnsafeSegment(const std::string &path) {
+  std::stringstream stream(path);
+  std::string segment;
+  while (std::getline(stream, segment, '/')) {
+    if (segment == "..") {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::string resolveStoragePath(const char *path) {
+  std::string logical = path ? std::string(path) : std::string("/");
+  if (logical.empty()) {
+    logical = "/";
+  }
+  if (containsUnsafeSegment(logical)) {
+    fprintf(stderr, "[SIM] rejected unsafe storage path: %s\n",
+            logical.c_str());
+    return {};
+  }
+  while (!logical.empty() && logical.front() == '/') {
+    logical.erase(logical.begin());
+  }
+
+  std::string root = configuredStorageRoot();
+  while (root.size() > 1 && root.back() == '/') {
+    root.pop_back();
+  }
+  if (logical.empty()) {
+    return root;
+  }
+  return root + "/" + logical;
+}
+
+bool ensureParentDirectories(const std::string &full) {
+  const size_t slash = full.find_last_of('/');
+  if (slash == std::string::npos) {
+    return true;
+  }
+  const std::string parent = full.substr(0, slash);
+  if (parent.empty()) {
+    return true;
+  }
+  for (size_t i = 1; i < parent.size(); ++i) {
+    if (parent[i] == '/') {
+      ::mkdir(parent.substr(0, i).c_str(), 0777);
+    }
+  }
+  return ::mkdir(parent.c_str(), 0777) == 0 || errno == EEXIST;
+}
+} // namespace
+
+bool HalStorage::begin() {
+  const std::string root = configuredStorageRoot();
+  for (size_t i = 1; i < root.size(); ++i) {
+    if (root[i] == '/') {
+      ::mkdir(root.substr(0, i).c_str(), 0777);
+    }
+  }
+  return ::mkdir(root.c_str(), 0777) == 0 || errno == EEXIST;
+}
 bool HalStorage::ready() const { return true; }
 
 class HalFile::Impl {
@@ -148,12 +221,26 @@ size_t HalFile::write(const void *buf, size_t count) {
   ssize_t n = ::write(impl->fd, buf, count);
   return n < 0 ? 0 : (size_t)n;
 }
+size_t HalFile::write(const uint8_t *buf, size_t count) {
+  return write(static_cast<const void *>(buf), count);
+}
 size_t HalFile::write(uint8_t b) {
   if (!impl || impl->fd < 0)
     return 0;
   return (::write(impl->fd, &b, 1) == 1) ? 1 : 0;
 }
-bool HalFile::rename(const char *newPath) { return false; }
+bool HalFile::rename(const char *newPath) {
+  if (!impl || impl->path.empty()) {
+    return false;
+  }
+  const std::string resolved = resolveStoragePath(newPath);
+  if (resolved.empty()) {
+    return false;
+  }
+  close();
+  ensureParentDirectories(resolved);
+  return ::rename(impl->path.c_str(), resolved.c_str()) == 0;
+}
 bool HalFile::isDirectory() const { return impl && impl->isDir(); }
 void HalFile::rewindDirectory() {
   if (impl && impl->dir)
@@ -208,8 +295,14 @@ bool HalFile::isOpen() const {
 HalFile::operator bool() const { return isOpen(); }
 
 HalFile HalStorage::open(const char *path, const oflag_t oflag) {
-  std::string full = "./fs_" + std::string(path);
+  std::string full = resolveStoragePath(path);
   HalFile f;
+  if (full.empty()) {
+    return f;
+  }
+  if ((oflag & O_CREAT) != 0) {
+    ensureParentDirectories(full);
+  }
   struct stat st;
   if (stat(full.c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
     f.impl->openAsDir(full.c_str());
@@ -219,7 +312,10 @@ HalFile HalStorage::open(const char *path, const oflag_t oflag) {
   return f;
 }
 bool HalStorage::mkdir(const char *path, const bool /*pFlag*/) {
-  std::string full = "./fs_" + std::string(path);
+  std::string full = resolveStoragePath(path);
+  if (full.empty()) {
+    return false;
+  }
   // Create all intermediate directories (mkdir -p semantics).
   for (size_t i = 1; i < full.size(); ++i) {
     if (full[i] == '/') {
@@ -230,17 +326,27 @@ bool HalStorage::mkdir(const char *path, const bool /*pFlag*/) {
   return ::mkdir(full.c_str(), 0777) == 0 || errno == EEXIST;
 }
 bool HalStorage::exists(const char *path) {
-  std::string full = "./fs_" + std::string(path);
+  std::string full = resolveStoragePath(path);
+  if (full.empty()) {
+    return false;
+  }
   struct stat buffer;
   return (stat(full.c_str(), &buffer) == 0);
 }
 bool HalStorage::remove(const char *path) {
-  std::string full = "./fs_" + std::string(path);
+  std::string full = resolveStoragePath(path);
+  if (full.empty()) {
+    return false;
+  }
   return ::remove(full.c_str()) == 0;
 }
 bool HalStorage::rename(const char *oldPath, const char *newPath) {
-  std::string o = "./fs_" + std::string(oldPath);
-  std::string n = "./fs_" + std::string(newPath);
+  std::string o = resolveStoragePath(oldPath);
+  std::string n = resolveStoragePath(newPath);
+  if (o.empty() || n.empty()) {
+    return false;
+  }
+  ensureParentDirectories(n);
   return ::rename(o.c_str(), n.c_str()) == 0;
 }
 static bool removeDirRecursive(const std::string &full) {
@@ -264,10 +370,18 @@ static bool removeDirRecursive(const std::string &full) {
 }
 
 bool HalStorage::rmdir(const char *path) {
-  return removeDirRecursive("./fs_" + std::string(path));
+  std::string full = resolveStoragePath(path);
+  if (full.empty()) {
+    return false;
+  }
+  return removeDirRecursive(full);
 }
 bool HalStorage::removeDir(const char *path) {
-  return removeDirRecursive("./fs_" + std::string(path));
+  std::string full = resolveStoragePath(path);
+  if (full.empty()) {
+    return false;
+  }
+  return removeDirRecursive(full);
 }
 
 String HalStorage::readFile(const char *path) {
@@ -343,7 +457,10 @@ bool HalStorage::openFileForWrite(const char *moduleName, const String &path,
 
 std::vector<String> HalStorage::listFiles(const char *path, int maxFiles) {
   std::vector<String> result;
-  std::string full = "./fs_" + std::string(path);
+  std::string full = resolveStoragePath(path);
+  if (full.empty()) {
+    return result;
+  }
   DIR *dir = opendir(full.c_str());
   if (!dir)
     return result;
