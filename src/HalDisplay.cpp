@@ -70,7 +70,7 @@ void HalDisplay::setSimulatorOrientation(int o) {
 HalDisplay::HalDisplay() {}
 HalDisplay::~HalDisplay() {}
 
-#if defined(SIMULATOR_DEVICE_X3) || defined(FORCE_DEVICE_X3)
+#if defined(SIMULATOR_DEVICE_X3)
 static constexpr const char *WINDOW_TITLE = "Simulator - XTEINK X3";
 #else
 static constexpr const char *WINDOW_TITLE = "Simulator - XTEINK X4";

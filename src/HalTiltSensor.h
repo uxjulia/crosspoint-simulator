@@ -27,8 +27,7 @@ private:
 
 public:
   void begin() {
-#if defined(FORCE_TILT_SENSOR_AVAILABLE) || defined(FORCE_DEVICE_X3) ||        \
-    defined(SIMULATOR_DEVICE_X3)
+#if defined(SIMULATOR_DEVICE_X3)
     _available = true;
 #else
     _available = false;
