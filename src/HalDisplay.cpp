@@ -24,14 +24,57 @@ static std::atomic<bool> pendingPresent{false};
 // shouldQuit().
 std::atomic<bool> quitRequested{false};
 
-static GfxRenderer::Orientation currentOrientation = GfxRenderer::Portrait;
+static std::atomic<int> currentOrientation{
+    static_cast<int>(GfxRenderer::Portrait)};
+static int currentWindowWidth = 0;
+static int currentWindowHeight = 0;
+
+static GfxRenderer::Orientation getCurrentOrientation() {
+  return static_cast<GfxRenderer::Orientation>(currentOrientation.load());
+}
+
+static bool isPortraitOrientation(GfxRenderer::Orientation orientation) {
+  return orientation == GfxRenderer::Portrait ||
+         orientation == GfxRenderer::PortraitInverted;
+}
+
+static void getLogicalWindowSize(GfxRenderer::Orientation orientation,
+                                 int *width, int *height) {
+  const bool isPortrait = isPortraitOrientation(orientation);
+  *width = (isPortrait ? HalDisplay::DISPLAY_HEIGHT : HalDisplay::DISPLAY_WIDTH) *
+           SIMULATOR_WINDOW_SCALE;
+  *height = (isPortrait ? HalDisplay::DISPLAY_WIDTH : HalDisplay::DISPLAY_HEIGHT) *
+            SIMULATOR_WINDOW_SCALE;
+}
+
+static void applyWindowGeometryIfNeeded(GfxRenderer::Orientation orientation) {
+  if (!window || !sdl_renderer)
+    return;
+
+  int winW = 0;
+  int winH = 0;
+  getLogicalWindowSize(orientation, &winW, &winH);
+  if (winW == currentWindowWidth && winH == currentWindowHeight)
+    return;
+
+  SDL_SetWindowSize(window, winW, winH);
+  SDL_RenderSetLogicalSize(sdl_renderer, winW, winH);
+  currentWindowWidth = winW;
+  currentWindowHeight = winH;
+}
 
 void HalDisplay::setSimulatorOrientation(int o) {
-  currentOrientation = static_cast<GfxRenderer::Orientation>(o);
+  currentOrientation.store(o);
 }
 
 HalDisplay::HalDisplay() {}
 HalDisplay::~HalDisplay() {}
+
+#if defined(SIMULATOR_DEVICE_X3)
+static constexpr const char *WINDOW_TITLE = "Simulator - XTEINK X3";
+#else
+static constexpr const char *WINDOW_TITLE = "Simulator - XTEINK X4";
+#endif
 
 void HalDisplay::begin() {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -40,16 +83,13 @@ void HalDisplay::begin() {
     return;
   }
 
-  bool isPortrait = (currentOrientation == GfxRenderer::Portrait ||
-                     currentOrientation == GfxRenderer::PortraitInverted);
-  int winW = isPortrait ? DISPLAY_HEIGHT * SIMULATOR_WINDOW_SCALE
-                        : DISPLAY_WIDTH * SIMULATOR_WINDOW_SCALE;
-  int winH = isPortrait ? DISPLAY_WIDTH * SIMULATOR_WINDOW_SCALE
-                        : DISPLAY_HEIGHT * SIMULATOR_WINDOW_SCALE;
+  int winW = 0;
+  int winH = 0;
+  getLogicalWindowSize(getCurrentOrientation(), &winW, &winH);
 
   // SDL_WINDOW_ALLOW_HIGHDPI lets the renderer use full Retina/HiDPI pixels on
   // macOS so we get crisp 1:1 rendering instead of a blurry upscale.
-  window = SDL_CreateWindow("Simulator - Open-X4 SDK", SDL_WINDOWPOS_UNDEFINED,
+  window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_UNDEFINED,
                             SDL_WINDOWPOS_UNDEFINED, winW, winH,
                             SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI);
   sdl_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -57,6 +97,8 @@ void HalDisplay::begin() {
   // Keep all rendering logic in logical (winW×winH) coordinates; SDL maps to
   // drawable pixels.
   SDL_RenderSetLogicalSize(sdl_renderer, winW, winH);
+  currentWindowWidth = winW;
+  currentWindowHeight = winH;
 
   // Linear filtering: Bayer-dithered pixels average to correct gray at scaled
   // sizes rather than showing harsh black/white patterns.
@@ -139,22 +181,24 @@ void HalDisplay::presentIfNeeded() {
   if (!texture || !sdl_renderer)
     return;
 
+  const GfxRenderer::Orientation orientation = getCurrentOrientation();
+  applyWindowGeometryIfNeeded(orientation);
+
   SDL_UpdateTexture(texture, nullptr, pixelBuf,
                     DISPLAY_WIDTH * sizeof(uint32_t));
   SDL_RenderClear(sdl_renderer);
 
-  // For portrait modes the texture (800x480 landscape) must be rotated to fill
-  // the portrait window (480x800). SDL_RenderCopyEx rotates around the centre
-  // of dst, so dst must stay landscape-oriented and be offset so its centre
-  // coincides with the window centre. After rotation the result fills the
-  // portrait window.
+  // For portrait modes the landscape panel texture must be rotated to fill the
+  // portrait window. SDL_RenderCopyEx rotates around the centre of dst, so dst
+  // must stay landscape-oriented and be offset so its centre coincides with the
+  // window centre. After rotation the result fills the portrait window.
   //
   // Portrait rotateCoordinates stores content rotated 90° CCW in the physical
   // buffer, so we rotate +90° CW here to undo it. PortraitInverted stores
   // content rotated 90° CW → undo with -90°.
-  switch (currentOrientation) {
+  switch (orientation) {
   case GfxRenderer::Portrait: {
-    // dst centre = window centre, landscape size 800x480
+    // dst centre = window centre, landscape-sized panel texture.
     SDL_Rect dst = {(DISPLAY_HEIGHT - DISPLAY_WIDTH) / 2,
                     DISPLAY_WIDTH / 2 - DISPLAY_HEIGHT / 2, DISPLAY_WIDTH,
                     DISPLAY_HEIGHT};
@@ -167,6 +211,12 @@ void HalDisplay::presentIfNeeded() {
                     DISPLAY_WIDTH / 2 - DISPLAY_HEIGHT / 2, DISPLAY_WIDTH,
                     DISPLAY_HEIGHT};
     SDL_RenderCopyEx(sdl_renderer, texture, nullptr, &dst, -90.0, nullptr,
+                     SDL_FLIP_NONE);
+    break;
+  }
+  case GfxRenderer::LandscapeClockwise: {
+    SDL_Rect dst = {0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT};
+    SDL_RenderCopyEx(sdl_renderer, texture, nullptr, &dst, 180.0, nullptr,
                      SDL_FLIP_NONE);
     break;
   }

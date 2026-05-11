@@ -9,7 +9,11 @@ Handles two things automatically when this lib is included as a lib_dep:
    simulator. Replaced with uint32_t, which is the correct explicit size on both
    platforms. Applied idempotently -- safe to run on every build.
 
-2. Registers a backward-compatible "run_simulator" custom target.
+2. Patches GfxRenderer::setOrientation so simulator builds notify HalDisplay
+   when the logical orientation changes. Without this, the framebuffer content
+   can rotate while the SDL window keeps its startup portrait/landscape shape.
+
+3. Registers a backward-compatible "run_simulator" custom target.
 
 This file can be loaded more than once in the same PlatformIO process:
 - once from this library's `library.json` build hook
@@ -23,6 +27,7 @@ when multiple registration paths exist.
 Import("env")
 import os
 import builtins
+import re
 
 RUN_SIMULATOR_TARGET_KEY = "_crosspoint_run_simulator_target_registered"
 RUN_SIMULATOR_TARGET_OWNER_OPTION = "custom_run_simulator_target_owner"
@@ -104,6 +109,55 @@ def _apply_source_patch(filepath):
 
 
 _patch_book_metadata_cache(env)
+
+
+# --- GfxRenderer simulator orientation hook patch ---
+
+def _patch_gfx_renderer_orientation_hook(env):
+    header = os.path.join(
+        env["PROJECT_DIR"], "lib", "GfxRenderer", "GfxRenderer.h"
+    )
+    if not os.path.isfile(header):
+        return
+
+    with open(header, "r") as f:
+        content = f.read()
+
+    if "setSimulatorOrientation(static_cast<int>(o))" in content:
+        return
+
+    pattern = re.compile(
+        r"(?m)^(?P<indent>\s*)void\s+setOrientation\(\s*(?:const\s+)?"
+        r"Orientation\s+o\s*\)\s*\{\s*orientation\s*=\s*o;\s*\}"
+    )
+
+    match = pattern.search(content)
+    if not match:
+        print(
+            "Simulator note: could not auto-patch GfxRenderer::setOrientation. "
+            "For runtime SDL orientation changes, add a SIMULATOR-only call to "
+            "display.setSimulatorOrientation(static_cast<int>(o))."
+        )
+        return
+
+    indent = match.group("indent")
+    replacement = (
+        f"{indent}void setOrientation(const Orientation o) {{\n"
+        f"{indent}  orientation = o;\n"
+        f"#ifdef SIMULATOR\n"
+        f"{indent}  display.setSimulatorOrientation(static_cast<int>(o));\n"
+        f"#endif\n"
+        f"{indent}}}"
+    )
+
+    content = content[: match.start()] + replacement + content[match.end() :]
+
+    with open(header, "w") as f:
+        f.write(content)
+    print("Patched GfxRenderer orientation hook for simulator: %s" % header)
+
+
+_patch_gfx_renderer_orientation_hook(env)
 
 
 # --- run_simulator custom target ---

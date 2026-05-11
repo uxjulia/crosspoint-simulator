@@ -5,7 +5,12 @@
 #include "HalGPIO.h"
 
 namespace CrossPointOrientation {
-enum Value : uint8_t { PORTRAIT = 0, LANDSCAPE_CW = 1, INVERTED = 2, LANDSCAPE_CCW = 3 };
+enum Value : uint8_t {
+  PORTRAIT = 0,
+  LANDSCAPE_CW = 1,
+  INVERTED = 2,
+  LANDSCAPE_CCW = 3
+};
 }
 
 namespace CrossPointTiltPageTurn {
@@ -16,13 +21,13 @@ class HalTiltSensor;
 extern HalTiltSensor halTiltSensor;
 
 class HalTiltSensor {
- private:
+private:
   bool _available = false;
   bool _isAwake = false;
 
- public:
+public:
   void begin() {
-#ifdef FORCE_TILT_SENSOR_AVAILABLE
+#if defined(SIMULATOR_DEVICE_X3)
     _available = true;
 #else
     _available = false;
@@ -31,13 +36,15 @@ class HalTiltSensor {
   }
 
   bool wake() {
-    if (!_available) return false;
+    if (!_available)
+      return false;
     _isAwake = true;
     return true;
   }
 
   bool deepSleep() {
-    if (!_available) return false;
+    if (!_available)
+      return false;
     _isAwake = false;
     return true;
   }

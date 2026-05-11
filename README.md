@@ -33,10 +33,21 @@ Add the simulator to your firmware's platformio.ini as a `lib_dep` and configure
 - `sample-platformio-macos.ini`
 - `sample-platformio-linux-wsl.ini`
 
-No scripts need to be copied into the firmware repo for the simulator to build. The simulator library automatically patches consumer-side compatibility issues from its own build script when PlatformIO fetches it as a dependency.
+No scripts need to be copied into the firmware repo for the simulator to build. The simulator library automatically patches consumer-side compatibility issues from its own build script when PlatformIO fetches it as a dependency, including the common `GfxRenderer::setOrientation()` hook needed for SDL window resizing.
 
 Keep the sample `build_src_filter` exclusions unless your firmware has already moved those files behind simulator guards. In the current CrossPoint/CrossInk layout, the simulator library supplies the host-side file-transfer and update shims while the lower-level `WebServer`, `WebSocketsServer`, and `NetworkClient` shims let shared network routes run on the desktop build.
 
+The simulator defaults to the X4 panel shape. To simulate X3, add `-DSIMULATOR_DEVICE_X3` to the consuming firmware's simulator `build_flags`. That switches the framebuffer to 792x528 landscape, reports `gpio.deviceIsX3()` as true, and exposes the simulator tilt sensor by default.
+
+If a fork has a custom renderer and the auto-patch cannot recognize it, its simulator build should notify the display when orientation changes:
+
+```cpp
+#ifdef SIMULATOR
+display.setSimulatorOrientation(static_cast<int>(o));
+#endif
+```
+
+Put that in the renderer's orientation setter after updating the renderer's own orientation state.
 By default, the simulator keeps its own `JPEGDEC`, `PNGdec`, and QRCode compatibility shims so existing firmware projects can update this library without changing their simulator environment. To test against the native decoder libraries instead, follow the opt-in comments in the sample PlatformIO files: define `CROSSPOINT_SIM_USE_NATIVE_DECODERS`, set `lib_compat_mode = off`, change simulator `lib_ignore` to `hal, WebSockets`, and add the native `PNGdec`/`JPEGDEC` dependencies. `WebSockets` is ignored only in native simulator builds because this repo supplies the host-backed `WebSocketsServer` implementation.
 
 If you only want a self-contained simulator dependency, stop there.
