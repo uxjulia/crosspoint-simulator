@@ -37,6 +37,8 @@ No scripts need to be copied into the firmware repo for the simulator to build. 
 
 Keep the sample `build_src_filter` exclusions unless your firmware has already moved those files behind simulator guards. In the current CrossPoint/CrossInk layout, the simulator library supplies the host-side file-transfer and update shims while the lower-level `WebServer`, `WebSocketsServer`, and `NetworkClient` shims let shared network routes run on the desktop build.
 
+The simulator defaults to the X4 panel shape. To simulate X3, add `-DSIMULATOR_DEVICE_X3` to the consuming firmware's simulator `build_flags`. That switches the framebuffer to 792x528 landscape, reports `gpio.deviceIsX3()` as true, and exposes the simulator tilt sensor by default.
+
 If you only want a self-contained simulator dependency, stop there.
 
 If you also want the `Run Simulator` task to appear in the consuming repo's PlatformIO IDE task list (under the "Custom" folder), let the consuming project own the IDE task registration. Add `custom_run_simulator_target_owner = project` to `[env:simulator]`, then add one project-level hook:

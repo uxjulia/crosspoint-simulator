@@ -55,7 +55,7 @@ static int scancodeToButton(SDL_Scancode sc) {
 }
 
 void HalGPIO::begin() {
-#ifdef FORCE_DEVICE_X3
+#if defined(SIMULATOR_DEVICE_X3) || defined(FORCE_DEVICE_X3)
   _deviceType = DeviceType::X3;
 #else
   _deviceType = DeviceType::X4;

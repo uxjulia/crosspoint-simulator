@@ -8,7 +8,7 @@ The repo ships as a PlatformIO library; downstream firmware adds it as a `lib_de
 
 ## Current State
 
-The simulator builds and runs on macOS and Linux/WSL. Portrait orientation is correct, gray shading renders cleanly at HiDPI, file browsing lists EPUBs from `./fs_/books/`, and reading a book shows the "Indexing..." popup on first open before rendering pages. Window close exits cleanly. Icons render in the UI (drawImage / drawImageTransparent are now implemented, not stubs). JPEG and PNG decoder shims render rough host-side previews for EPUB images and PNG sleep overlays. HalGPIO carries a DeviceType (X4 default, X3 selectable) so downstream code branching on device type compiles in the simulator. Host-backed web shims cover `WebServer`, `WebSocketsServer`, and `NetworkClient`, with firmware port 80 exposed on `http://127.0.0.1:8080/` and port 81 WebSockets exposed on `ws://127.0.0.1:8081/`.
+The simulator builds and runs on macOS and Linux/WSL. Portrait orientation is correct, gray shading renders cleanly at HiDPI, file browsing lists EPUBs from `./fs_/books/`, and reading a book shows the "Indexing..." popup on first open before rendering pages. Window close exits cleanly. Icons render in the UI (drawImage / drawImageTransparent are now implemented, not stubs). JPEG and PNG decoder shims render rough host-side previews for EPUB images and PNG sleep overlays. HalGPIO carries a DeviceType (X4 default, X3 selectable with `SIMULATOR_DEVICE_X3`) so downstream code branching on device type compiles in the simulator. Host-backed web shims cover `WebServer`, `WebSocketsServer`, and `NetworkClient`, with firmware port 80 exposed on `http://127.0.0.1:8080/` and port 81 WebSockets exposed on `ws://127.0.0.1:8081/`.
 
 ## Setup
 
@@ -54,7 +54,7 @@ pio run -e simulator -t run_simulator
 
 **Display thread model.** SDL on macOS requires all SDL calls happen on the main thread, but firmware drives rendering from a FreeRTOS render task (now a `std::thread`). The split: [HalDisplay::refreshDisplay](src/HalDisplay.cpp) (background thread) converts the 1bpp framebuffer to ARGB pixels and sets an atomic `pendingPresent` flag. [HalDisplay::presentIfNeeded](src/HalDisplay.cpp) (called from `simulator_main` on the main thread) uploads to the texture, applies orientation rotation, and calls `SDL_RenderPresent`.
 
-**Orientation.** The renderer's `rotateCoordinates` writes content into the physical 800×480 buffer rotated 90° CCW for `Portrait` (and 90° CW for `PortraitInverted`). The simulator undoes this with `SDL_RenderCopyEx` rotation:
+**Orientation.** The renderer's `rotateCoordinates` writes content into the physical landscape buffer rotated 90° CCW for `Portrait` (and 90° CW for `PortraitInverted`). The simulator undoes this with `SDL_RenderCopyEx` rotation:
 
 | Orientation        | SDL angle |
 | ------------------ | --------- |
@@ -86,7 +86,7 @@ pio run -e simulator -t run_simulator
 
 ### X3 device support scaffolding (commit 674c571, 2026-04-23)
 
-- [HalGPIO](src/HalGPIO.h) now has `enum class DeviceType : uint8_t { X4, X3 }` plus `deviceIsX3()` / `deviceIsX4()` helpers. `_deviceType` defaults to `X4`. This matches a downstream firmware change that branches on device type — without it, simulator builds break.
+- [HalGPIO](src/HalGPIO.h) now has `enum class DeviceType : uint8_t { X4, X3 }` plus `deviceIsX3()` / `deviceIsX4()` helpers. `_deviceType` defaults to `X4`, and `SIMULATOR_DEVICE_X3` selects the X3 device path and 792x528 framebuffer. This matches a downstream firmware change that branches on device type — without it, simulator builds break.
 
 ### Match upstream HAL surface (2026-04-06 onward)
 

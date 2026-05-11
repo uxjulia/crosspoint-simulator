@@ -33,15 +33,9 @@ void HalDisplay::setSimulatorOrientation(int o) {
 HalDisplay::HalDisplay() {}
 HalDisplay::~HalDisplay() {}
 
-// X4: 4.3" panel, 800×480 buffer — display at 0.5× (400×240 window in
-// landscape). X3: 3.7" panel, 792×528 buffer — display at 0.5× (396×264 window
-// in landscape). Both use the same 0.5× scale; the different buffer dimensions
-// already produce the correctly proportioned window for each device.
-#if defined(SIMULATOR_DEVICE_X3)
-static constexpr double WINDOW_SCALE = 0.5;
+#if defined(SIMULATOR_DEVICE_X3) || defined(FORCE_DEVICE_X3)
 static constexpr const char *WINDOW_TITLE = "Simulator - XTEINK X3";
 #else
-static constexpr double WINDOW_SCALE = 0.5;
 static constexpr const char *WINDOW_TITLE = "Simulator - XTEINK X4";
 #endif
 
@@ -61,7 +55,7 @@ void HalDisplay::begin() {
 
   // SDL_WINDOW_ALLOW_HIGHDPI lets the renderer use full Retina/HiDPI pixels on
   // macOS so we get crisp 1:1 rendering instead of a blurry upscale.
-  window = SDL_CreateWindow("Simulator - Open-X4 SDK", SDL_WINDOWPOS_UNDEFINED,
+  window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_UNDEFINED,
                             SDL_WINDOWPOS_UNDEFINED, winW, winH,
                             SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI);
   sdl_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -155,18 +149,17 @@ void HalDisplay::presentIfNeeded() {
                     DISPLAY_WIDTH * sizeof(uint32_t));
   SDL_RenderClear(sdl_renderer);
 
-  // For portrait modes the texture (800x480 landscape) must be rotated to fill
-  // the portrait window (480x800). SDL_RenderCopyEx rotates around the centre
-  // of dst, so dst must stay landscape-oriented and be offset so its centre
-  // coincides with the window centre. After rotation the result fills the
-  // portrait window.
+  // For portrait modes the landscape panel texture must be rotated to fill the
+  // portrait window. SDL_RenderCopyEx rotates around the centre of dst, so dst
+  // must stay landscape-oriented and be offset so its centre coincides with the
+  // window centre. After rotation the result fills the portrait window.
   //
   // Portrait rotateCoordinates stores content rotated 90° CCW in the physical
   // buffer, so we rotate +90° CW here to undo it. PortraitInverted stores
   // content rotated 90° CW → undo with -90°.
   switch (currentOrientation) {
   case GfxRenderer::Portrait: {
-    // dst centre = window centre, landscape size 800x480
+    // dst centre = window centre, landscape-sized panel texture.
     SDL_Rect dst = {(DISPLAY_HEIGHT - DISPLAY_WIDTH) / 2,
                     DISPLAY_WIDTH / 2 - DISPLAY_HEIGHT / 2, DISPLAY_WIDTH,
                     DISPLAY_HEIGHT};
