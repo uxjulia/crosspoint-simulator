@@ -39,6 +39,9 @@ Keep the sample `build_src_filter` exclusions unless your firmware has already m
 
 The simulator defaults to the X4 panel shape. To simulate X3, add `-DSIMULATOR_DEVICE_X3` to the consuming firmware's simulator `build_flags`. That switches the framebuffer to 792x528 landscape, reports `gpio.deviceIsX3()` as true, and exposes the simulator tilt sensor by default.
 
+Keep `CROSSPOINT_VERSION` semver-like in simulator builds. Package compatibility checks parse this value when packages
+declare `target.minFirmware`, so a non-version string can make otherwise valid packages appear incompatible.
+
 If a fork has a custom renderer and the auto-patch cannot recognize it, its simulator build should notify the display when orientation changes:
 
 ```cpp
