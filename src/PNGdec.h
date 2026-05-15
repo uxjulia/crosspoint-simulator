@@ -1,11 +1,11 @@
 #pragma once
 
-#if defined(CROSSPOINT_SIM_USE_NATIVE_DECODERS)
+#if defined(MARGINALIA_SIM_USE_NATIVE_DECODERS) || defined(CROSSPOINT_SIM_USE_NATIVE_DECODERS)
 #if defined(__has_include_next)
 #if __has_include_next(<PNGdec.h>)
 #include_next <PNGdec.h>
 #else
-#error "CROSSPOINT_SIM_USE_NATIVE_DECODERS requires PNGdec in this PlatformIO environment"
+#error "MARGINALIA_SIM_USE_NATIVE_DECODERS requires PNGdec in this PlatformIO environment"
 #endif
 #else
 #include_next <PNGdec.h>

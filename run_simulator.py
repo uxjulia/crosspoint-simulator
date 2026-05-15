@@ -1,5 +1,5 @@
 """
-PlatformIO library build script for the Crosspoint Simulator.
+PlatformIO library build script for the Marginalia Simulator.
 
 Handles two things automatically when this lib is included as a lib_dep:
 
@@ -29,7 +29,7 @@ import os
 import builtins
 import re
 
-RUN_SIMULATOR_TARGET_KEY = "_crosspoint_run_simulator_target_registered"
+RUN_SIMULATOR_TARGET_KEY = "_marginalia_run_simulator_target_registered"
 RUN_SIMULATOR_TARGET_OWNER_OPTION = "custom_run_simulator_target_owner"
 
 

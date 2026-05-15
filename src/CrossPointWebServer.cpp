@@ -601,7 +601,7 @@ std::string htmlPage() {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CrossPoint Reader Simulator</title>
+<title>Marginalia Reader Simulator</title>
 <style>
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:24px;max-width:980px}
 button,input{font:inherit;margin:4px}
@@ -612,7 +612,7 @@ td,th{border-bottom:1px solid #ddd;padding:8px;text-align:left}
 </style>
 </head>
 <body>
-<h1>CrossPoint Reader Simulator</h1>
+<h1>Marginalia Reader Simulator</h1>
 <div class="bar">
 <button onclick="up()">Up</button>
 <span class="path" id="path"></span>
@@ -741,7 +741,7 @@ void handleClientRequest(CrossPointWebServer *owner, NativeServerState &state,
             "[SIM] WebDAV locks are not enforced by the native simulator");
     sendResponse(client, 501, "text/plain",
                  "[SIM] WebDAV locks are not supported by the native simulator",
-                 "DAV: 1\r\nX-CrossPoint-Simulator: lock-not-enforced\r\n");
+                 "DAV: 1\r\nX-Marginalia-Simulator: lock-not-enforced\r\n");
     return;
   }
   if (req.method == "PROPFIND") {

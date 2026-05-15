@@ -2,13 +2,13 @@
 
 ## What This Is
 
-A desktop simulator for [CrossPoint](https://github.com/crosspoint-reader/crosspoint-reader) firmware. Compiles the firmware as a native binary (PlatformIO `platform = native`) and renders the e-ink display in an SDL2 window. Now supports macOS, Linux, and WSL — Windows native is not supported.
+A desktop simulator for [Marginalia](https://github.com/marginalia-os/marginalia-firmware) firmware. Compiles the firmware as a native binary (PlatformIO `platform = native`) and renders the e-ink display in an SDL2 window. Now supports macOS, Linux, and WSL — Windows native is not supported.
 
 The repo ships as a PlatformIO library; downstream firmware adds it as a `lib_dep` named `simulator` and configures an `[env:simulator]` environment that builds with `-DSIMULATOR`.
 
 ## Current State
 
-The simulator builds and runs on macOS and Linux/WSL. Portrait orientation is correct, gray shading renders cleanly at HiDPI, file browsing lists EPUBs from `./fs_/books/`, and reading a book shows the "Indexing..." popup on first open before rendering pages. Window close exits cleanly. Icons render in the UI (drawImage / drawImageTransparent are now implemented, not stubs). JPEG and PNG decoder shims render rough host-side previews for EPUB images and PNG sleep overlays by default; native `PNGdec`/`JPEGDEC` can be enabled explicitly with `CROSSPOINT_SIM_USE_NATIVE_DECODERS`, `lib_compat_mode = off`, and simulator `lib_ignore = hal, WebSockets`. HalGPIO carries a DeviceType (X4 default, X3 selectable) so downstream code branching on device type compiles in the simulator. Host-backed web shims cover `WebServer`, `WebSocketsServer`, and `NetworkClient`, with firmware port 80 exposed on `http://127.0.0.1:8080/` and port 81 WebSockets exposed on `ws://127.0.0.1:8081/`.
+The simulator builds and runs on macOS and Linux/WSL. Portrait orientation is correct, gray shading renders cleanly at HiDPI, file browsing lists EPUBs from `./fs_/books/`, and reading a book shows the "Indexing..." popup on first open before rendering pages. Window close exits cleanly. Icons render in the UI (drawImage / drawImageTransparent are now implemented, not stubs). JPEG and PNG decoder shims render rough host-side previews for EPUB images and PNG sleep overlays by default; native `PNGdec`/`JPEGDEC` can be enabled explicitly with `MARGINALIA_SIM_USE_NATIVE_DECODERS`, `lib_compat_mode = off`, and simulator `lib_ignore = hal, WebSockets`. HalGPIO carries a DeviceType (X4 default, X3 selectable) so downstream code branching on device type compiles in the simulator. Host-backed web shims cover `WebServer`, `WebSocketsServer`, and `NetworkClient`, with firmware port 80 exposed on `http://127.0.0.1:8080/` and port 81 WebSockets exposed on `ws://127.0.0.1:8081/`.
 
 ## Setup
 
@@ -24,9 +24,9 @@ Linux/WSL needs OpenSSL because [MD5Builder_linux.h](src/MD5Builder_linux.h) wra
 **Integration into firmware**
 
 1. Copy [sample-platformio-macos.ini](sample-platformio-macos.ini) or [sample-platformio-linux-wsl.ini](sample-platformio-linux-wsl.ini) contents into the firmware's `platformio.ini` as a new `[env:simulator]` block.
-2. For local dev, replace the git ref with a symlink: `simulator=symlink://../crosspoint-simulator`.
+2. For local dev, replace the git ref with a symlink: `simulator=symlink://../marginalia-simulator`.
 3. Optional: if you want PlatformIO's IDE task list to show `Run Simulator`, add `custom_run_simulator_target_owner = project` and the `post:` hook shown in [README.md](README.md). Do not copy [run_simulator.py](run_simulator.py) into the firmware repo; it is auto-loaded from this library through [library.json](library.json).
-4. Optional native decoder mode: add `-DCROSSPOINT_SIM_USE_NATIVE_DECODERS`, set `lib_compat_mode = off`, use `lib_ignore = hal, WebSockets`, and add the native `PNGdec`/`JPEGDEC` dependencies shown in the sample comments.
+4. Optional native decoder mode: add `-DMARGINALIA_SIM_USE_NATIVE_DECODERS`, set `lib_compat_mode = off`, use `lib_ignore = hal, WebSockets`, and add the native `PNGdec`/`JPEGDEC` dependencies shown in the sample comments.
 5. Place EPUBs at `./fs_/books/` (relative to the binary's working directory). This maps to SD card path `/books/`.
 
 **Build and run**
@@ -106,7 +106,7 @@ pio run -e simulator -t run_simulator
 ### Host-backed web server shims (2026-05-10)
 
 - [src/WebServer.cpp](src/WebServer.cpp), [src/WebSocketsServer.cpp](src/WebSocketsServer.cpp), and [src/NetworkClient.cpp](src/NetworkClient.cpp) provide native socket-backed shims for firmware web routes. Firmware servers that bind port 80 are exposed on `http://127.0.0.1:8080/`; WebSocket servers that bind port 81 are exposed on `ws://127.0.0.1:8081/`.
-- The sample PlatformIO files still exclude `network/CrossPointWebServer.cpp`, `network/WebDAVHandler.cpp`, and updater/flasher files for the current CrossPoint/CrossInk layout. Those exclusions avoid compiling embedded-only or duplicate host-side implementations while the simulator library supplies compatible desktop paths.
+- The sample PlatformIO files still exclude `network/CrossPointWebServer.cpp`, `network/WebDAVHandler.cpp`, and updater/flasher files for the current inherited firmware layout. Those exclusions avoid compiling embedded-only or duplicate host-side implementations while the simulator library supplies compatible desktop paths.
 
 ### HalStorage menu-items fix (commit 40c578e, 2026-04-19)
 
@@ -140,7 +140,7 @@ These shaped the current code; details kept short since the fixes are already in
 
 **Spine entries had empty hrefs after caches loaded** — `BookMetadataCache::lutOffset` was `size_t` (8 bytes on macOS 64-bit) but `headerASize` was computed as `sizeof(uint32_t)` (4 bytes). The 4-byte mismatch shifted all spine seeks. Fixed in firmware by changing `lutOffset` to `uint32_t` (on ESP32 they're identical, so no device impact).
 
-After any of the storage / cache fixes: `rm -rf ./fs_/.crosspoint/` to drop stale caches built with broken code.
+After any of the storage / cache fixes: `rm -rf ./fs_/.crosspoint/ ./fs_/.marginalia/` to drop stale caches and package state built with old code.
 
 ## Known Remaining Work
 

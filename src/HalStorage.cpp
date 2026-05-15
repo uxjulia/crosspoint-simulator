@@ -18,7 +18,10 @@ HalStorage::HalStorage() {}
 
 namespace {
 std::string configuredStorageRoot() {
-  const char *root = std::getenv("CROSSPOINT_SIM_SD");
+  const char *root = std::getenv("MARGINALIA_SIM_SD");
+  if (!root || !*root) {
+    root = std::getenv("CROSSPOINT_SIM_SD");
+  }
   if (!root || !*root) {
     root = std::getenv("CROSSPOINT_EMU_SD");
   }

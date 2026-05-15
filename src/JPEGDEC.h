@@ -1,11 +1,11 @@
 #pragma once
 
-#if defined(CROSSPOINT_SIM_USE_NATIVE_DECODERS)
+#if defined(MARGINALIA_SIM_USE_NATIVE_DECODERS) || defined(CROSSPOINT_SIM_USE_NATIVE_DECODERS)
 #if defined(__has_include_next)
 #if __has_include_next(<JPEGDEC.h>)
 #include_next <JPEGDEC.h>
 #else
-#error "CROSSPOINT_SIM_USE_NATIVE_DECODERS requires JPEGDEC in this PlatformIO environment"
+#error "MARGINALIA_SIM_USE_NATIVE_DECODERS requires JPEGDEC in this PlatformIO environment"
 #endif
 #else
 #include_next <JPEGDEC.h>

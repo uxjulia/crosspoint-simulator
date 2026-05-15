@@ -151,7 +151,10 @@ inline bool fetchFromFileUrl(const std::string &url, Response &out) {
 }
 
 inline bool fetchFromMockRoot(const std::string &url, Response &out) {
-  const char *root = std::getenv("CROSSPOINT_SIM_HTTP_MOCK_ROOT");
+  const char *root = std::getenv("MARGINALIA_SIM_HTTP_MOCK_ROOT");
+  if (!root || !*root) {
+    root = std::getenv("CROSSPOINT_SIM_HTTP_MOCK_ROOT");
+  }
   if (!root || root[0] == '\0')
     return false;
 
@@ -183,7 +186,7 @@ inline bool fetchWithCurl(const std::string &url, const char *method,
                           const std::map<std::string, std::string> &headers,
                           const std::string &basicAuth, const char *body,
                           Response &out) {
-  char tmpTemplate[] = "/tmp/crosspoint-sim-http-XXXXXX";
+  char tmpTemplate[] = "/tmp/marginalia-sim-http-XXXXXX";
   int fd = mkstemp(tmpTemplate);
   if (fd < 0)
     return false;

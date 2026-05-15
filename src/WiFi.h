@@ -69,7 +69,7 @@ class WiFiClass {
   wl_status_t currentStatus = WL_DISCONNECTED;
   String currentSsid;
   std::vector<Network> defaultNetworks{
-      {"Simulator WiFi (fake)", -45, WIFI_AUTH_OPEN},
+      {"Marginalia Simulator WiFi (fake)", -45, WIFI_AUTH_OPEN},
       {"Local Test Network (fake)", -62, WIFI_AUTH_WPA2_PSK}};
   mutable bool cachedNetworkSpecInitialized = false;
   mutable std::string cachedNetworkSpec;
@@ -80,24 +80,36 @@ class WiFiClass {
     return value && value[0] ? value : nullptr;
   }
 
-  static const char *simEnvValue(const char *simName, const char *legacyName) {
-    const char *value = envValue(simName);
-    return value ? value : envValue(legacyName);
+  static const char *simEnvValue(const char *primaryName,
+                                 const char *legacyName = nullptr,
+                                 const char *olderLegacyName = nullptr) {
+    if (const char *value = envValue(primaryName)) {
+      return value;
+    }
+    if (legacyName) {
+      if (const char *value = envValue(legacyName)) {
+        return value;
+      }
+    }
+    return olderLegacyName ? envValue(olderLegacyName) : nullptr;
   }
 
-  static bool simEnvEquals(const char *simName, const char *legacyName,
+  static bool simEnvEquals(const char *primaryName, const char *legacyName,
+                           const char *olderLegacyName,
                            const char *expected) {
-    const char *value = simEnvValue(simName, legacyName);
+    const char *value = simEnvValue(primaryName, legacyName, olderLegacyName);
     return value && std::string(value) == expected;
   }
 
   bool scanOverrideEnabled() const {
-    return simEnvValue("CROSSPOINT_SIM_WIFI_NETWORKS",
+    return simEnvValue("MARGINALIA_SIM_WIFI_NETWORKS",
+                       "CROSSPOINT_SIM_WIFI_NETWORKS",
                        "CROSSPOINT_EMU_WIFI_NETWORKS") != nullptr;
   }
 
   const std::vector<Network> &configuredNetworks() const {
-    const char *configured = simEnvValue("CROSSPOINT_SIM_WIFI_NETWORKS",
+    const char *configured = simEnvValue("MARGINALIA_SIM_WIFI_NETWORKS",
+                                         "CROSSPOINT_SIM_WIFI_NETWORKS",
                                          "CROSSPOINT_EMU_WIFI_NETWORKS");
     const std::string spec =
         configured ? std::string(configured) : std::string();
@@ -161,18 +173,21 @@ public:
   wl_status_t begin(const char *ssid = nullptr, const char *pass = nullptr) {
     (void)pass;
     currentMode = WIFI_STA;
-    currentSsid = ssid ? ssid : "Simulator WiFi (fake)";
-    if (simEnvEquals("CROSSPOINT_SIM_WIFI_CONNECT",
+    currentSsid = ssid ? ssid : "Marginalia Simulator WiFi (fake)";
+    if (simEnvEquals("MARGINALIA_SIM_WIFI_CONNECT",
+                     "CROSSPOINT_SIM_WIFI_CONNECT",
                      "CROSSPOINT_EMU_WIFI_CONNECT", "fail")) {
       currentStatus = WL_CONNECT_FAILED;
       return currentStatus;
     }
-    if (simEnvEquals("CROSSPOINT_SIM_WIFI_CONNECT",
+    if (simEnvEquals("MARGINALIA_SIM_WIFI_CONNECT",
+                     "CROSSPOINT_SIM_WIFI_CONNECT",
                      "CROSSPOINT_EMU_WIFI_CONNECT", "no-ssid")) {
       currentStatus = WL_NO_SSID_AVAIL;
       return currentStatus;
     }
-    if (simEnvEquals("CROSSPOINT_SIM_WIFI_CONNECT",
+    if (simEnvEquals("MARGINALIA_SIM_WIFI_CONNECT",
+                     "CROSSPOINT_SIM_WIFI_CONNECT",
                      "CROSSPOINT_EMU_WIFI_CONNECT", "timeout")) {
       currentStatus = WL_IDLE_STATUS;
       return currentStatus;
@@ -207,9 +222,9 @@ public:
     (void)hidden;
     (void)max_connection;
     currentMode = WIFI_AP;
-    currentSsid = ssid ? ssid : "CrossPoint-Simulator";
-    if (simEnvEquals("CROSSPOINT_SIM_WIFI_AP", "CROSSPOINT_EMU_WIFI_AP",
-                     "fail")) {
+    currentSsid = ssid ? ssid : "Marginalia-Simulator";
+    if (simEnvEquals("MARGINALIA_SIM_WIFI_AP", "CROSSPOINT_SIM_WIFI_AP",
+                     "CROSSPOINT_EMU_WIFI_AP", "fail")) {
       currentStatus = WL_CONNECT_FAILED;
       return false;
     }
@@ -268,7 +283,7 @@ public:
   wifi_mode_t getMode() { return currentMode; }
   void setSleep(bool) {}
   void setAutoReconnect(bool) {}
-  String getHostname() { return String("crosspoint-simulator"); }
+  String getHostname() { return String("marginalia-simulator"); }
   int softAPgetStationNum() { return 0; }
 };
 extern WiFiClass WiFi;

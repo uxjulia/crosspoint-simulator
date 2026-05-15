@@ -7,7 +7,8 @@
 
 namespace {
 
-constexpr const char* kWakeReasonEnv = "CROSSPOINT_SIM_WAKE_REASON";
+constexpr const char* kWakeReasonEnv = "MARGINALIA_SIM_WAKE_REASON";
+constexpr const char* kLegacyWakeReasonEnv = "CROSSPOINT_SIM_WAKE_REASON";
 char** gArgv = nullptr;
 
 }  // namespace
@@ -17,12 +18,17 @@ namespace SimulatorLifecycle {
 void initProcessArgs(char** argv) { gArgv = argv; }
 
 WakeReason consumeWakeReason() {
-  const char* value = std::getenv(kWakeReasonEnv);
+  const char* envName = kWakeReasonEnv;
+  const char* value = std::getenv(envName);
+  if (!value) {
+    envName = kLegacyWakeReasonEnv;
+    value = std::getenv(envName);
+  }
   if (!value) {
     return WakeReason::None;
   }
 
-  unsetenv(kWakeReasonEnv);
+  unsetenv(envName);
   if (std::strcmp(value, "power") == 0) {
     return WakeReason::PowerButton;
   }

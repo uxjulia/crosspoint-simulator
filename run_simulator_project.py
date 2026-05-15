@@ -14,7 +14,7 @@ same launcher script to be loaded twice.
 Import("env")  # noqa: F821 - SCons injects this at build time
 import builtins
 
-RUN_SIMULATOR_TARGET_KEY = "_crosspoint_run_simulator_target_registered"
+RUN_SIMULATOR_TARGET_KEY = "_marginalia_run_simulator_target_registered"
 
 
 def run_simulator(source, target, env):

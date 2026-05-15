@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A desktop simulator for [CrossPoint](https://github.com/crosspoint-reader/crosspoint-reader) firmware. It is **not** a standalone app, it ships as a PlatformIO library that downstream firmware adds as a `lib_dep` (named `simulator`) and builds with `platform = native` and `-DSIMULATOR`. The result is the firmware compiled as a host binary, with the e-ink display rendered into an SDL2 window.
+A desktop simulator for [Marginalia](https://github.com/marginalia-os/marginalia-firmware) firmware. It is **not** a standalone app, it ships as a PlatformIO library that downstream firmware adds as a `lib_dep` (named `simulator`) and builds with `platform = native` and `-DSIMULATOR`. The result is the firmware compiled as a host binary, with the e-ink display rendered into an SDL2 window.
 
 There is no build target inside this repo. Build and run happen in the consuming firmware project. See [README.md](README.md) for end-user setup, and [.claude/CONTEXT-sim-notes.md](.claude/CONTEXT-sim-notes.md) for the deep architecture notes and bug-fix history (read this before non-trivial changes).
 
@@ -13,10 +13,10 @@ There is no build target inside this repo. Build and run happen in the consuming
 ```bash
 pio run -e simulator -t run_simulator   # build + launch
 pio run -e simulator                    # build only, then .pio/build/simulator/program
-rm -rf ./fs_/.crosspoint/               # clear stale on-disk caches after storage/cache changes
+rm -rf ./fs_/.crosspoint/ ./fs_/.marginalia/  # clear stale on-disk caches/package state after storage changes
 ```
 
-For local dev against this repo, the firmware's `platformio.ini` should reference it as `simulator=symlink://../crosspoint-simulator` instead of the git URL.
+For local dev against this repo, the firmware's `platformio.ini` should reference it as `simulator=symlink://../marginalia-simulator` instead of the git URL.
 
 There are no tests, no linter, and no per-file build commands. A change is "tested" by running the simulator and exercising the affected feature.
 
@@ -39,7 +39,7 @@ The simulator is a collection of host-side reimplementations of the firmware's h
 **Host-specific code paths:**
 
 - MD5: [src/MD5Builder.h](src/MD5Builder.h) is a thin dispatcher that auto-selects the implementation via `#ifdef __APPLE__` / `#elif __linux__`. [src/MD5Builder_mac.h](src/MD5Builder_mac.h) uses CommonCrypto; [src/MD5Builder_linux.h](src/MD5Builder_linux.h) uses OpenSSL. No downstream swapping is needed - just include `MD5Builder.h`.
-- Web server shims: [src/WebServer.cpp](src/WebServer.cpp), [src/WebSocketsServer.cpp](src/WebSocketsServer.cpp), and [src/NetworkClient.cpp](src/NetworkClient.cpp) expose firmware port 80 as `http://127.0.0.1:8080/` and port 81 WebSockets as `ws://127.0.0.1:8081/`. For the current CrossPoint/CrossInk layout, keep the sample exclusions for `network/CrossPointWebServer.cpp` and `network/WebDAVHandler.cpp`; the simulator library still owns those host-side compatibility paths.
+- Web server shims: [src/WebServer.cpp](src/WebServer.cpp), [src/WebSocketsServer.cpp](src/WebSocketsServer.cpp), and [src/NetworkClient.cpp](src/NetworkClient.cpp) expose firmware port 80 as `http://127.0.0.1:8080/` and port 81 WebSockets as `ws://127.0.0.1:8081/`. For the current inherited firmware layout, keep the sample exclusions for `network/CrossPointWebServer.cpp` and `network/WebDAVHandler.cpp`; the simulator library still owns those host-side compatibility paths.
 - Build flags: macOS uses `-arch arm64` and `/opt/homebrew/{include,lib}`; Linux/WSL adds `-lssl -lcrypto -Wno-deprecated-declarations` (OpenSSL 3.x deprecates `MD5_*`). See [sample-platformio-macos.ini](sample-platformio-macos.ini) and [sample-platformio-linux-wsl.ini](sample-platformio-linux-wsl.ini). Keep both in sync when build flags change. Native Windows is not supported, WSL is.
 - Linker stubs: [src/firmware_link_stubs.cpp](src/firmware_link_stubs.cpp) provides symbols the firmware expects from other translation units (uzlib checksums, HWCDC Serial shim, LUT stubs). When the firmware adds a new global-extern symbol with no simulator counterpart, add its stub here.
 
@@ -51,5 +51,5 @@ The simulator is a collection of host-side reimplementations of the firmware's h
 
 - Adding a new HAL method? Mirror the firmware signature exactly and stub it (usually no-op) in the matching `Hal*.cpp/.h`. Do not invent new public methods that don't exist in the firmware HAL.
 - Adding a new Arduino/ESP-IDF symbol? Add the minimum stub to the corresponding header in [src/](src/) (e.g. [src/WiFi.h](src/WiFi.h), [src/Arduino.h](src/Arduino.h)). Match the upstream signature, return a sensible default.
-- Touching storage or caching code? After the change, `rm -rf ./fs_/.crosspoint/` in the firmware project before re-running, otherwise stale caches built by the old code will mask the fix.
+- Touching storage, package, or caching code? After the change, `rm -rf ./fs_/.crosspoint/ ./fs_/.marginalia/` in the firmware project before re-running, otherwise stale host state can mask the fix.
 - Touching display, threading, or shutdown? Re-read the "Why the simulator's design has the shape it does" section above first. Several of those decisions undo subtle bugs that will resurface if reverted.

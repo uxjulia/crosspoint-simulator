@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    name: Validate simulator package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Validate metadata and public names
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path(".")
+          metadata = json.loads(Path("library.json").read_text())
+          assert metadata["name"] == "Marginalia Simulator"
+
+          readme = Path("README.md").read_text()
+          assert readme.startswith("# Marginalia Simulator")
+          assert "https://github.com/marginalia-os/marginalia-simulator" in Path("sample-platformio-macos.ini").read_text()
+          assert "https://github.com/marginalia-os/marginalia-simulator" in Path("sample-platformio-linux-wsl.ini").read_text()
+
+          forbidden = {
+              "CrossPoint" + " Simulator",
+              "Crosspoint" + " Simulator",
+              "crosspoint" + "-simulator",
+              "https://github.com/uxjulia/" + "crosspoint" + "-simulator",
+          }
+          for path in root.rglob("*"):
+              if ".git" in path.parts or not path.is_file():
+                  continue
+              try:
+                  text = path.read_text()
+              except UnicodeDecodeError:
+                  continue
+              hits = sorted(term for term in forbidden if term in text)
+              if hits:
+                  raise SystemExit(f"{path}: forbidden public names: {', '.join(hits)}")
+          PY
+
+      - name: Syntax-check core simulator shims
+        run: |
+          printf '#include "WiFi.h"\n' | c++ -std=c++17 -Isrc -x c++ -fsyntax-only -
+          c++ -std=c++17 -Isrc -fsyntax-only src/SimulatorLifecycle.cpp
