@@ -1,12 +1,16 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for agents working in `marginalia-simulator`.
 
 ## What this repo is
 
 A desktop simulator for [Marginalia](https://github.com/marginalia-os/marginalia-firmware) firmware. It is **not** a standalone app, it ships as a PlatformIO library that downstream firmware adds as a `lib_dep` (named `simulator`) and builds with `platform = native` and `-DSIMULATOR`. The result is the firmware compiled as a host binary, with the e-ink display rendered into an SDL2 window.
 
 There is no build target inside this repo. Build and run happen in the consuming firmware project. See [README.md](README.md) for end-user setup, and [.claude/CONTEXT-sim-notes.md](.claude/CONTEXT-sim-notes.md) for the deep architecture notes and bug-fix history (read this before non-trivial changes).
+
+This repo should track firmware public surfaces closely. If `marginalia-firmware` adds HAL methods, Arduino/ESP-IDF
+symbols, storage behavior, network routes, package-state behavior, or display hooks, update simulator stubs in the same
+feature cycle when possible.
 
 ## Build and run (from the consuming firmware repo)
 
