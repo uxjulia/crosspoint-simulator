@@ -1,5 +1,7 @@
 #include <Logging.h>
 
+#include <atomic>
+
 #include "network/OtaUpdater.h"
 
 bool OtaUpdater::isUpdateNewer() const { return false; }
@@ -14,20 +16,14 @@ OtaUpdater::OtaUpdaterError OtaUpdater::checkForUpdate() {
 }
 
 OtaUpdater::OtaUpdaterError
-OtaUpdater::installUpdate(ProgressCallback onProgress, void *ctx
-#ifdef CROSSINK_VERSION
-                          ,
-                          std::atomic<bool> *cancelRequested
-#endif
-) {
+OtaUpdater::installUpdate(ProgressCallback onProgress, void *ctx,
+                          std::atomic<bool> *cancelRequested) {
   LOG_DBG("OTA", "[SIM] OTA install is not supported in the native simulator");
   processedSize = 1;
   totalSize = 1;
   if (onProgress)
     onProgress(ctx);
-#ifdef CROSSINK_VERSION
   if (cancelRequested && cancelRequested->load())
     return CANCELLED_ERROR;
-#endif
   return INTERNAL_UPDATE_ERROR;
 }
