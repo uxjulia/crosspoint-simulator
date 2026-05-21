@@ -144,6 +144,13 @@ unsigned long HalGPIO::getHeldTime() const {
   return maxHeld;
 }
 
+unsigned long HalGPIO::getPowerButtonHeldTime() const {
+  const uint8_t *state = SDL_GetKeyboardState(NULL);
+  if (!state[buttonScancode[BTN_POWER]] || buttonPressTime[BTN_POWER] == 0)
+    return 0;
+  return SDL_GetTicks() - buttonPressTime[BTN_POWER];
+}
+
 bool HalGPIO::consumeSimulatorSleepRequest() {
   const bool requested = simulatorSleepRequested;
   simulatorSleepRequested = false;

@@ -60,6 +60,7 @@ public:
   bool wasReleased(uint8_t buttonIndex) const;
   bool wasAnyReleased() const;
   unsigned long getHeldTime() const;
+  unsigned long getPowerButtonHeldTime() const;
   bool consumeSimulatorSleepRequest();
 
   // Setup wake up GPIO and enter deep sleep

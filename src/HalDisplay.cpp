@@ -108,6 +108,8 @@ void HalDisplay::begin() {
                               DISPLAY_HEIGHT);
 }
 
+void HalDisplay::begin(bool /*seamless*/) { begin(); }
+
 void HalDisplay::clearScreen(uint8_t color) const {
   memset(getFrameBuffer(), color, BUFFER_SIZE);
 }
