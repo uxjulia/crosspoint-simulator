@@ -56,6 +56,9 @@ struct SimEspHttpClient {
   std::string postField;
   int statusCode = 0;
   int contentLength = -1;
+  std::string responseBody;
+  size_t bodyOffset = 0;
+  bool opened = false;
 };
 
 namespace sim_http_client_detail {
@@ -143,6 +146,63 @@ inline esp_err_t esp_http_client_perform(esp_http_client_handle_t handle) {
   }
 
   return ESP_OK;
+}
+
+inline esp_err_t esp_http_client_open(esp_http_client_handle_t handle,
+                                      int /*write_len*/) {
+  if (!handle || !handle->config.url)
+    return ESP_FAIL;
+  using namespace sim_http_client_detail;
+  sim_http_fetch::Response response;
+  std::string basicAuth;
+  if (handle->config.username && handle->config.auth_type != HTTP_AUTH_TYPE_NONE) {
+    basicAuth = handle->config.username;
+    basicAuth += ':';
+    if (handle->config.password)
+      basicAuth += handle->config.password;
+  }
+  if (!sim_http_fetch::fetch(handle->config.url, methodName(handle->config.method),
+                             handle->headers, basicAuth,
+                             handle->postField.empty() ? nullptr : handle->postField.c_str(),
+                             response))
+    return ESP_FAIL;
+  handle->statusCode = response.statusCode;
+  handle->responseBody = std::move(response.body);
+  handle->contentLength = static_cast<int>(handle->responseBody.size());
+  handle->bodyOffset = 0;
+  handle->opened = true;
+  return ESP_OK;
+}
+
+inline int64_t esp_http_client_fetch_headers(esp_http_client_handle_t handle) {
+  if (!handle || !handle->opened)
+    return -1;
+  return static_cast<int64_t>(handle->responseBody.size());
+}
+
+inline esp_err_t esp_http_client_set_redirection(esp_http_client_handle_t /*handle*/) {
+  // curl -L already follows redirects; no-op in simulator
+  return ESP_OK;
+}
+
+inline int esp_http_client_read(esp_http_client_handle_t handle, char *buf,
+                                int len) {
+  if (!handle || !handle->opened || !buf || len <= 0)
+    return -1;
+  size_t remaining = handle->responseBody.size() - handle->bodyOffset;
+  size_t toRead = std::min(static_cast<size_t>(len), remaining);
+  if (toRead == 0)
+    return 0;
+  std::memcpy(buf, handle->responseBody.data() + handle->bodyOffset, toRead);
+  handle->bodyOffset += toRead;
+  return static_cast<int>(toRead);
+}
+
+inline bool
+esp_http_client_is_complete_data_received(esp_http_client_handle_t handle) {
+  if (!handle || !handle->opened)
+    return false;
+  return handle->bodyOffset >= handle->responseBody.size();
 }
 
 inline esp_err_t esp_http_client_cleanup(esp_http_client_handle_t handle) {
