@@ -50,7 +50,7 @@ public:
   }
 
   bool isAvailable() const { return _available; }
-  void update(uint8_t /*mode*/, uint8_t /*orientation*/, bool /*inReader*/) {}
+  void update(uint8_t /*mode*/, uint8_t /*direction*/, uint8_t /*orientation*/, bool /*inReader*/) {}
   bool wasTiltedForward() { return false; }
   bool wasTiltedBack() { return false; }
   bool hadActivity() { return false; }
