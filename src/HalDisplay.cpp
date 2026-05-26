@@ -247,6 +247,9 @@ void HalDisplay::copyGrayscaleMsbBuffers(const uint8_t *) {}
 void HalDisplay::cleanupGrayscaleBuffers(const uint8_t *) {}
 void HalDisplay::displayGrayBuffer(bool, const unsigned char *, bool) {}
 
+void HalDisplay::writeGrayscalePlaneStrip(bool, const uint8_t*, uint16_t, uint16_t) {}
+bool HalDisplay::supportsStripGrayscale() const { return false; }
+
 uint16_t HalDisplay::getDisplayWidth() const { return DISPLAY_WIDTH; }
 uint16_t HalDisplay::getDisplayHeight() const { return DISPLAY_HEIGHT; }
 uint16_t HalDisplay::getDisplayWidthBytes() const {

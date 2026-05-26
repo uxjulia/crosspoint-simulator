@@ -62,6 +62,11 @@ public:
                          const unsigned char *lut = nullptr,
                          bool factoryMode = false);
 
+  // Tiled grayscale strip — no-op in simulator; supportsStripGrayscale()
+  // returns false so callers fall back to the framebuffer path.
+  void writeGrayscalePlaneStrip(bool lsbPlane, const uint8_t* rows, uint16_t yStart, uint16_t numRows);
+  bool supportsStripGrayscale() const;
+
   // Simulator only: keep SDL window rotation in sync with GfxRenderer
   // orientation.
   void setSimulatorOrientation(int orientation);
