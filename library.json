@@ -1,6 +1,7 @@
 {
   "name": "Crosspoint Simulator",
   "version": "1.0.0",
+  "license": "MIT",
   "build": {
     "extraScript": "run_simulator.py"
   }
